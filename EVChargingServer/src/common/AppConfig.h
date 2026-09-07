@@ -45,7 +45,7 @@ public:
     };
     PasswordMode passwordMode() const { return m_passwordMode; }
 
-    // 会话 token 有效期(天)。协议 7.2 建议 7 天
+    // 会话 token 有效期(天)。建议 7 天
     int     tokenValidDays() const  { return m_tokenValidDays; }
 
     // ---- 短信验证码(模拟) ----

@@ -98,7 +98,7 @@ void ServerCore::onSessionDisconnected(ClientSession *session)
 }
 
 // ---------------------------------------------------------------------------
-// 管理员登录(跨线程)
+// 管理员登录
 // ---------------------------------------------------------------------------
 
 void ServerCore::requestAdminLogin(int requestId, const QString &username,
@@ -815,7 +815,5 @@ int ServerCore::requireLogin(ClientSession *s, const QVariantMap &p, quint32 rid
         return -1;
     }
 
-    s->setUserId(userId);
-    s->setToken(token);
     return userId;
 }

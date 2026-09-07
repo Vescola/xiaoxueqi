@@ -10,7 +10,7 @@
 // ---------------------------------------------------------------------------
 // 程序入口
 //
-// 启动顺序(依《思路.docx》):
+// 启动顺序:
 //   1. 加载 ini 配置
 //   2. 打开数据库(建表 + 演示数据)
 //   3. 启动业务核心 ServerCore 到独立子线程(常驻, 与 GUI 登录无关)
@@ -21,7 +21,7 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     app.setApplicationName("EVChargingServer");
-    app.setOrganizationName("Neusoft");
+    app.setOrganizationName("xiaozu");
 
     // 1. 配置
     AppConfig::instance().load();
