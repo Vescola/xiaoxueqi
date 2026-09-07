@@ -136,12 +136,30 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="addChargerButton">
+       <property name="text">
+        <string>新增电桩</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="editChargerButton">
+       <property name="text">
+        <string>编辑电桩</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="deleteChargerButton">
+       <property name="text">
+        <string>删除电桩</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="restartButton">
        <property name="text">
-        <string>远程重启（待开放）</string>
-       </property>
-       <property name="enabled">
-        <bool>false</bool>
+        <string>远程重启</string>
        </property>
       </widget>
      </item>

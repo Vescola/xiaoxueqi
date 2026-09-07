@@ -1,0 +1,32 @@
+# ---- Qt Creator 用户本地配置 ----
+*.pro.user
+*.pro.user.*
+
+# ---- qmake 生成的构建文件 ----
+Makefile
+Makefile.*
+.qmake.stash
+object_script.*
+
+# ---- 编译产物 ----
+*.o
+*.obj
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+
+# ---- 可执行文件与库 ----
+*.exe
+*.so
+*.dylib
+*.dll
+
+# ---- 运行时生成的数据(首次运行自动生成) ----
+charging.db
+config.ini
+
+# ---- 通用构建目录 ----
+build*/
+debug/
+release/

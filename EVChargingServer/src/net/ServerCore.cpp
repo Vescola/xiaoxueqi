@@ -1,14 +1,15 @@
-#include "net/ServerCore.h"
+#include "net/servercore.h"
 
-#include "net/ClientSession.h"
-#include "net/SessionManager.h"
-#include "common/AppConfig.h"
-#include "common/Protocol.h"
-#include "common/PasswordUtil.h"
-#include "db/ServerDb.h"
+#include "net/clientsession.h"
+#include "net/sessionmanager.h"
+#include "common/appconfig.h"
+#include "common/protocol.h"
+#include "common/passwordutil.h"
+#include "db/databasemanager.h"
 
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QUuid>
 #include <QDateTime>
 #include <QRegularExpression>
 #include <QRandomGenerator>
@@ -103,7 +104,7 @@ void ServerCore::onSessionDisconnected(ClientSession *session)
 void ServerCore::requestAdminLogin(int requestId, const QString &username,
                                    const QString &password)
 {
-    const bool ok = ServerDb::instance().adminLogin(username, password);
+    const bool ok = DatabaseManager::instance().adminLogin(username, password);
     emit logMessage(QStringLiteral("管理员登录请求: %1 -> %2")
                         .arg(username).arg(ok ? "成功" : "失败"));
     emit adminLoginFinished(requestId, ok);
@@ -245,7 +246,7 @@ void ServerCore::handleRegister(ClientSession *s, const QVariantMap &p, quint32 
     // 密码入库加工(当前明文哈希, 预留加盐)
     const QString stored = PasswordUtil::hashForStorage(password);
 
-    const int userId = ServerDb::instance().registerUser(phone, stored, nickname);
+    const int userId = DatabaseManager::instance().registerUser(phone, stored, nickname);
     if (userId == -1) {
         replyError(s, rid, Err::PHONE_EXISTS, "手机号已存在");
         return;
@@ -266,7 +267,7 @@ void ServerCore::handleRegister(ClientSession *s, const QVariantMap &p, quint32 
 void ServerCore::handleLogin(ClientSession *s, const QVariantMap &p, quint32 rid)
 {
     using namespace Protocol;
-    ServerDb &db = ServerDb::instance();
+    DatabaseManager &db = DatabaseManager::instance();
 
     const QString phone    = p.value("phone").toString().trimmed();
     const QString password = p.value("password").toString();
@@ -282,7 +283,7 @@ void ServerCore::handleLogin(ClientSession *s, const QVariantMap &p, quint32 rid
     //  2) 密码登录: 校验密码
     bool smsLogin = !smsCode.isEmpty();
 
-    UserInfo user;
+    User user;
     bool exists = db.getUserByPhone(phone, user);
 
     if (smsLogin) {
@@ -291,9 +292,13 @@ void ServerCore::handleLogin(ClientSession *s, const QVariantMap &p, quint32 rid
             return;
         }
         if (!exists) {
-            // 自动注册(项目说明书 1.4: 手机号不存在则自动建号)
+            // 自动注册(项目说明书 1.4: 手机号不存在则自动建号)。
+            // 数据库 registerUser 要求密码非空, 此处用随机占位口令(不告知用户),
+            // 用户后续通过短信登录或"找回密码"重设。
             const QString nick = "用户" + phone.right(4);
-            const int uid = db.registerUser(phone, QString(), nick);
+            const QString placeholderPwd =
+                QUuid::createUuid().toString(QUuid::WithoutBraces);
+            const int uid = db.registerUser(phone, placeholderPwd, nick);
             if (uid <= 0) {
                 replyError(s, rid, Err::DB_ERROR, "自动注册失败");
                 return;
@@ -359,7 +364,7 @@ void ServerCore::handleFindPwd(ClientSession *s, const QVariantMap &p, quint32 r
     const QString newPwd   = p.value("newPassword").toString();
     const QString verify   = p.value("verifyCode").toString().trimmed();
 
-    if (!ServerDb::instance().userExistsByPhone(phone)) {
+    if (!DatabaseManager::instance().userExistsByPhone(phone)) {
         replyError(s, rid, Err::PHONE_UNREGISTER, "手机号未注册");
         return;
     }
@@ -368,7 +373,7 @@ void ServerCore::handleFindPwd(ClientSession *s, const QVariantMap &p, quint32 r
         return;
     }
     const QString stored = PasswordUtil::hashForStorage(newPwd);
-    if (!ServerDb::instance().resetPasswordByPhone(phone, stored)) {
+    if (!DatabaseManager::instance().resetPasswordByPhone(phone, stored)) {
         replyError(s, rid, Err::DB_ERROR, "重置失败");
         return;
     }
@@ -390,19 +395,11 @@ void ServerCore::handleChangePwd(ClientSession *s, const QVariantMap &p, quint32
     const QString oldPwd = p.value("oldPassword").toString();
     const QString newPwd = p.value("newPassword").toString();
 
-    UserInfo user;
-    if (!ServerDb::instance().getUserById(userId, user)) {
-        replyError(s, rid, Err::DB_ERROR, "用户不存在");
-        return;
-    }
-    if (!PasswordUtil::verify(oldPwd, user.password)) {
-        replyError(s, rid, Err::OLD_PWD_ERR, "原密码错误");
-        return;
-    }
-
-    const QString stored = PasswordUtil::hashForStorage(newPwd);
-    if (!ServerDb::instance().changePassword(userId, stored)) {
-        replyError(s, rid, Err::DB_ERROR, "修改失败");
+    // 数据库端 changePassword 内部完成"原密码比对 + 写入新密码"。
+    // 当前 PasswordMode=plain: 库里存的就是客户端 SHA-256 哈希, 直接比对即可;
+    // 加盐哈希由 PasswordUtil 负责, 切换模式时此处逻辑保持不变。
+    if (!DatabaseManager::instance().changePassword(userId, oldPwd, newPwd)) {
+        replyError(s, rid, Err::OLD_PWD_ERR, "原密码错误或修改失败");
         return;
     }
 
@@ -426,11 +423,13 @@ void ServerCore::handleRecharge(ClientSession *s, const QVariantMap &p, quint32 
         return;
     }
 
-    double newBalance = 0.0;
-    if (!ServerDb::instance().recharge(userId, amount, newBalance)) {
+    if (!DatabaseManager::instance().recharge(userId, amount)) {
         replyError(s, rid, Err::DB_ERROR, "充值失败");
         return;
     }
+    User recharged;
+    DatabaseManager::instance().getUserInfo(userId, recharged);
+    const double newBalance = recharged.balance;
 
     QVariantMap r;
     r.insert("code", Err::OK);
@@ -447,8 +446,8 @@ void ServerCore::handleBalanceQuery(ClientSession *s, const QVariantMap &p, quin
         return;
     }
 
-    UserInfo user;
-    if (!ServerDb::instance().getUserById(userId, user)) {
+    User user;
+    if (!DatabaseManager::instance().getUserInfo(userId, user)) {
         replyError(s, rid, Err::DB_ERROR, "查询失败");
         return;
     }
@@ -478,7 +477,7 @@ void ServerCore::handleTransaction(ClientSession *s, const QVariantMap &p, quint
 
     int total = 0;
     const QList<WalletRecord> records =
-        ServerDb::instance().getWalletRecords(userId, from, to,
+        DatabaseManager::instance().getWalletRecords(userId, from, to,
                                               page, pageSize, total);
 
     QVariantList list;
@@ -519,7 +518,7 @@ void ServerCore::handleStations(ClientSession *s, const QVariantMap &p, quint32 
 
     int total = 0;
     const QList<StationBrief> stations =
-        ServerDb::instance().getNearbyStations(lat, lon, radius,
+        DatabaseManager::instance().getNearbyStations(lat, lon, radius,
                                                limit, offset, total);
 
     QVariantList list;
@@ -556,13 +555,13 @@ void ServerCore::handleStationDetail(ClientSession *s, const QVariantMap &p, qui
         return;
     }
 
-    ServerDb &db = ServerDb::instance();
-    const StationInfo st = db.getStationById(stationId);
-    const QList<ChargerInfo> chargers = db.getChargersByStation(stationId);
+    DatabaseManager &db = DatabaseManager::instance();
+    const Station st = db.getStationById(stationId);
+    const QList<Charger> chargers = db.getChargersByStation(stationId);
 
     int freeCount = 0;
     QVariantList piles;
-    for (const ChargerInfo &c : chargers) {
+    for (const Charger &c : chargers) {
         if (c.status == "idle") {
             ++freeCount;
         }
@@ -596,7 +595,7 @@ void ServerCore::handleCheckOrder(ClientSession *s, const QVariantMap &p, quint3
     }
 
     bool found = false;
-    const OrderInfo order = ServerDb::instance().getUnfinishedOrder(userId, found);
+    const Order order = DatabaseManager::instance().getUnfinishedOrder(userId, found);
 
     QVariantMap r;
     r.insert("code", Err::OK);
@@ -625,11 +624,11 @@ void ServerCore::handleStartCharge(ClientSession *s, const QVariantMap &p, quint
         return;
     }
 
-    ServerDb &db = ServerDb::instance();
+    DatabaseManager &db = DatabaseManager::instance();
 
     // 1. 电桩状态检查
     bool found = false;
-    const ChargerInfo charger = db.getChargerByCode(pileId, found);
+    const Charger charger = db.getChargerByCode(pileId, found);
     if (!found) {
         replyError(s, rid, Err::PARAM_FORMAT, "电桩不存在");
         return;
@@ -656,8 +655,8 @@ void ServerCore::handleStartCharge(ClientSession *s, const QVariantMap &p, quint
     }
 
     // 3. 余额检查(协议 3001)
-    UserInfo user;
-    db.getUserById(userId, user);
+    User user;
+    db.getUserInfo(userId, user);
     if (user.balance <= 0) {
         replyError(s, rid, Err::BALANCE_LOW, "余额不足");
         return;
@@ -702,10 +701,10 @@ void ServerCore::handleStopCharge(ClientSession *s, const QVariantMap &p, quint3
         return;
     }
 
-    ServerDb &db = ServerDb::instance();
+    DatabaseManager &db = DatabaseManager::instance();
 
     bool found = false;
-    OrderInfo order = db.getOrderByNo(orderNo, found);
+    Order order = db.getOrderByNo(orderNo, found);
     if (!found || order.userId != userId) {
         replyError(s, rid, Err::PARAM_FORMAT, "订单不存在");
         return;
@@ -719,23 +718,26 @@ void ServerCore::handleStopCharge(ClientSession *s, const QVariantMap &p, quint3
     const QDateTime start = QDateTime::fromString(order.startTime, "yyyy-MM-dd HH:mm:ss");
     const qint64 secs = qMax<qint64>(1, start.secsTo(QDateTime::currentDateTime()));
     bool cf = false;
-    const ChargerInfo charger = db.getChargerByCode(order.chargerCode, cf);
+    const Charger charger = db.getChargerByCode(order.chargerCode, cf);
     const double powerKw = cf ? charger.powerKw : 7.0;
     const double energyKwh = powerKw * (secs / 3600.0) * 0.85;
 
-    double amount = 0.0;
-    QString endTime;
-    int durMin = 0;
-    if (!db.finishOrder(orderNo, energyKwh, amount, endTime, durMin)) {
+    if (!db.finishOrder(orderNo, energyKwh)) {
         replyError(s, rid, Err::DB_ERROR, "结束充电失败");
         return;
     }
+    bool doneFound = false;
+    const Order done = db.getOrderByNo(orderNo, doneFound);
+    const double amount = done.amount;
+    const QString endTime = done.endTime;
 
-    double newBalance = 0.0;
-    if (!db.payOrder(orderNo, newBalance)) {
+    if (!db.payOrder(orderNo)) {
         replyError(s, rid, Err::BALANCE_LOW, "结算失败(余额不足)");
         return;
     }
+    User payer;
+    db.getUserInfo(userId, payer);
+    const double newBalance = payer.balance;
 
     QVariantMap r;
     r.insert("code", Err::OK);
@@ -760,7 +762,7 @@ void ServerCore::handleChargeStatus(ClientSession *s, const QVariantMap &p, quin
 
     const QString orderNo = p.value("orderId").toString().trimmed();
     bool found = false;
-    const OrderInfo order = ServerDb::instance().getOrderByNo(orderNo, found);
+    const Order order = DatabaseManager::instance().getOrderByNo(orderNo, found);
     if (!found || order.userId != userId) {
         replyError(s, rid, Err::PARAM_FORMAT, "订单不存在");
         return;
@@ -807,8 +809,8 @@ int ServerCore::requireLogin(ClientSession *s, const QVariantMap &p, quint32 rid
         return -1;
     }
 
-    UserInfo user;
-    if (ServerDb::instance().getUserById(userId, user) && user.status == "frozen") {
+    User user;
+    if (DatabaseManager::instance().getUserInfo(userId, user) && user.status == "frozen") {
         replyError(s, rid, Protocol::Err::ACCOUNT_FROZEN, "账号已被冻结");
         return -1;
     }

@@ -1,7 +1,7 @@
-#include "ui/pages/SalesPage.h"
-#include "ui_SalesPage.h"
+#include "ui/pages/salespage.h"
+#include "ui_salespage.h"
 
-#include "db/ServerDb.h"
+#include "db/databasemanager.h"
 
 SalesPage::SalesPage(QWidget *parent)
     : QWidget(parent)
@@ -25,7 +25,7 @@ SalesPage::~SalesPage()
 
 void SalesPage::refresh()
 {
-    const RevenueSummary s = ServerDb::instance().getRevenueSummary();
+    const RevenueSummary s = DatabaseManager::instance().getRevenueSummary();
     ui->todayValue->setText(QString::number(s.today, 'f', 2));
     ui->monthValue->setText(QString::number(s.month, 'f', 2));
     ui->totalValue->setText(QString::number(s.total, 'f', 2));
@@ -36,7 +36,7 @@ void SalesPage::refresh()
 void SalesPage::onRangeChanged()
 {
     const int days = (ui->rangeCombo->currentIndex() == 0) ? 7 : 30;
-    const auto trend = ServerDb::instance().getRevenueTrend(days);
+    const auto trend = DatabaseManager::instance().getRevenueTrend(days);
 
     QList<QPair<QString, double>> data;
     for (const auto &kv : trend) {

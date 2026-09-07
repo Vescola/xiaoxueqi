@@ -50,20 +50,14 @@
      <item>
       <widget class="QPushButton" name="freezeButton">
        <property name="text">
-        <string>冻结（待开放）</string>
-       </property>
-       <property name="enabled">
-        <bool>false</bool>
+        <string>冻结</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QPushButton" name="unfreezeButton">
        <property name="text">
-        <string>解冻（待开放）</string>
-       </property>
-       <property name="enabled">
-        <bool>false</bool>
+        <string>解冻</string>
        </property>
       </widget>
      </item>

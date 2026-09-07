@@ -2,10 +2,10 @@
 #include <QThread>
 #include <QMessageBox>
 
-#include "common/AppConfig.h"
-#include "db/ServerDb.h"
-#include "net/ServerCore.h"
-#include "ui/LauncherWindow.h"
+#include "common/appconfig.h"
+#include "db/databasemanager.h"
+#include "net/servercore.h"
+#include "ui/launcherwindow.h"
 
 // ---------------------------------------------------------------------------
 // 程序入口
@@ -26,13 +26,15 @@ int main(int argc, char *argv[])
     // 1. 配置
     AppConfig::instance().load();
 
-    // 2. 数据库(主线程打开并建表/播种)
-    if (!ServerDb::instance().open(AppConfig::instance().dbPath(),
-                                   AppConfig::instance().autoSeed())) {
+    // 2. 数据库(主线程初始化连接; 建表/播种在 ensureSchemaAndSeed 中完成)
+    if (!DatabaseManager::instance().initDatabase(AppConfig::instance().dbPath())) {
         QMessageBox::critical(nullptr, QStringLiteral("数据库错误"),
             QStringLiteral("无法打开数据库文件:\n%1")
                 .arg(AppConfig::instance().dbPath()));
         return 1;
+    }
+    if (AppConfig::instance().autoSeed()) {
+        DatabaseManager::instance().ensureSchemaAndSeed();
     }
 
     // 3. 业务核心 -> 子线程

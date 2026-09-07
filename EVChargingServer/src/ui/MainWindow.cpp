@@ -1,11 +1,11 @@
-#include "ui/MainWindow.h"
-#include "ui_MainWindow.h"
+#include "ui/mainwindow.h"
+#include "ui_mainwindow.h"
 
-#include "ui/pages/SalesPage.h"
-#include "ui/pages/StationPage.h"
-#include "ui/pages/PilePage.h"
-#include "ui/pages/UserPage.h"
-#include "ui/pages/OrderPage.h"
+#include "ui/pages/salespage.h"
+#include "ui/pages/stationpage.h"
+#include "ui/pages/pilepage.h"
+#include "ui/pages/userpage.h"
+#include "ui/pages/orderpage.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QWidget(parent)

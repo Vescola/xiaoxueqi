@@ -1,21 +1,17 @@
-#include "db/ServerDb.h"
-#include "common/PasswordUtil.h"
+#include "databasemanager.h"
 
-#include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QSqlDatabase>
 #include <QVariant>
 #include <QThread>
 #include <QDateTime>
-#include <QDebug>
-#include <QFileInfo>
-#include <QCoreApplication>
-#include <QRandomGenerator>
-#include <QStringList>
-#include <algorithm>
-#include <cmath>
 #include <QDate>
 #include <QMap>
+#include <QStringList>
+#include <QDebug>
+#include <algorithm>
+#include <cmath>
 
 // ---------------------------------------------------------------------------
 // 内部小工具
@@ -43,30 +39,51 @@ double haversineM(double lat1, double lon1, double lat2, double lon2)
     return kEarthRadiusM * c;
 }
 
+void seedChargers(QSqlDatabase &db, int stationId, const QString &codePrefix,
+                  const QString &type, double power, int count)
+{
+    const QStringList all = QStringList() << "idle" << "idle" << "idle"
+                                          << "charging" << "fault" << "offline";
+    for (int i = 1; i <= count; ++i) {
+        const QString code = codePrefix + QString("-%1").arg(i, 2, 10, QChar('0'));
+        const QString status = all[(i - 1) % all.size()];
+
+        QSqlQuery q(db);
+        q.prepare("INSERT OR IGNORE INTO chargers"
+                  " (charger_code, station_id, type, power_kw, status)"
+                  " VALUES (?, ?, ?, ?, ?)");
+        q.addBindValue(code);
+        q.addBindValue(stationId);
+        q.addBindValue(type);
+        q.addBindValue(power);
+        q.addBindValue(status);
+        q.exec();
+    }
+}
+
 } // namespace
 
 // ---------------------------------------------------------------------------
 // 单例
 // ---------------------------------------------------------------------------
 
-ServerDb::ServerDb()
+DatabaseManager::DatabaseManager()
 {
 }
 
-ServerDb& ServerDb::instance()
+DatabaseManager& DatabaseManager::instance()
 {
-    static ServerDb db;
-    return db;
+    static DatabaseManager manager;
+    return manager;
 }
 
 // ---------------------------------------------------------------------------
-// 每线程独立连接。Qt 的 QSqlDatabase 连接不能跨线程共享,
-// 而本数据层会同时被 GUI 线程与 ServerCore 子线程调用。
+// 每线程独立连接
 // ---------------------------------------------------------------------------
 
-QSqlDatabase ServerDb::database()
+QSqlDatabase DatabaseManager::database()
 {
-    const QString connName = QStringLiteral("evsrv_%1")
+    const QString connName = QStringLiteral("dbmgr_%1")
         .arg(reinterpret_cast<quintptr>(QThread::currentThreadId()), 0, 16);
 
     if (QSqlDatabase::contains(connName)) {
@@ -76,26 +93,27 @@ QSqlDatabase ServerDb::database()
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE", connName);
     db.setDatabaseName(m_dbPath);
     if (!db.open()) {
-        qWarning() << "[ServerDb] 打开数据库失败:" << db.lastError().text();
+        qWarning() << "[DatabaseManager] 打开数据库失败:" << db.lastError().text();
     }
     return db;
 }
 
-bool ServerDb::exec(const QString &sql)
+bool DatabaseManager::exec(const QString &sql)
 {
     QSqlQuery q(database());
     if (!q.exec(sql)) {
-        qWarning() << "[ServerDb] SQL 失败:" << q.lastError().text() << "\n  SQL:" << sql;
+        qWarning() << "[DatabaseManager] SQL 失败:" << q.lastError().text()
+                   << "\n  SQL:" << sql;
         return false;
     }
     return true;
 }
 
 // ---------------------------------------------------------------------------
-// 打开 / 建表 / 种子
+// 初始化 / 建表 / 种子
 // ---------------------------------------------------------------------------
 
-bool ServerDb::open(const QString &dbPath, bool autoSeed)
+bool DatabaseManager::initDatabase(const QString &dbPath)
 {
     m_dbPath = dbPath;
 
@@ -105,26 +123,17 @@ bool ServerDb::open(const QString &dbPath, bool autoSeed)
     }
 
     exec("PRAGMA foreign_keys = ON");
-
-    if (autoSeed) {
-        ensureSchemaAndSeed();
-    }
     return true;
 }
 
-bool ServerDb::isOpen()
-{
-    return database().isOpen();
-}
-
-bool ServerDb::ensureSchemaAndSeed()
+bool DatabaseManager::ensureSchemaAndSeed()
 {
     QSqlDatabase db = database();
     if (!db.isOpen()) {
         return false;
     }
 
-    // ---- 建表: 与 database.sql 完全一致(仅把 IF NOT EXISTS 语义保留) ----
+    // ---- 建表: 与 database.sql 完全一致 ----
     exec("CREATE TABLE IF NOT EXISTS users ("
          " id INTEGER PRIMARY KEY AUTOINCREMENT,"
          " phone TEXT NOT NULL UNIQUE,"
@@ -195,17 +204,7 @@ bool ServerDb::ensureSchemaAndSeed()
     // ---- 默认管理员 ----
     exec("INSERT OR IGNORE INTO admins (username, password) VALUES ('admin', '123456')");
 
-    // 便于和用户端联调: 演示用户统一使用 Demo@123 的客户端哈希。
-    {
-        QSqlQuery patchPassword(database());
-        patchPassword.prepare("UPDATE users SET password = ?"
-                              " WHERE phone IN ('13800138000', '13912345678', '13700001111')"
-                              " AND (password IS NULL OR password = '')");
-        patchPassword.addBindValue(PasswordUtil::clientHash(QStringLiteral("Demo@123")));
-        patchPassword.exec();
-    }
-
-    // ---- 演示种子数据: 仅当库为空时灌入 ----
+    // ---- 库为空时灌入演示数据 ----
     {
         QSqlQuery cnt(database());
         cnt.exec("SELECT COUNT(*) FROM stations");
@@ -220,40 +219,10 @@ bool ServerDb::ensureSchemaAndSeed()
     return true;
 }
 
-namespace {
-// 受限于篇幅, 种子数据直接内联 SQL 语句执行
-void seedChargers(QSqlDatabase &db, int stationId, const QString &codePrefix,
-                  const QString &type, double power, int count,
-                  const QString &statusPattern)
-{
-    for (int i = 1; i <= count; ++i) {
-        const QString code = codePrefix + QString("-%1").arg(i, 2, 10, QChar('0'));
-        // statusPattern: "idle/charging/fault/offline" 循环分布
-        QString status;
-        const QStringList all = QStringList() << "idle" << "idle" << "idle"
-                                              << "charging" << "fault" << "offline";
-        status = all[(i - 1) % all.size()];
-
-        QSqlQuery q(db);
-        q.prepare("INSERT OR IGNORE INTO chargers"
-                  " (charger_code, station_id, type, power_kw, status)"
-                  " VALUES (?, ?, ?, ?, ?)");
-        q.addBindValue(code);
-        q.addBindValue(stationId);
-        q.addBindValue(type);
-        q.addBindValue(power);
-        q.addBindValue(status);
-        q.exec();
-        Q_UNUSED(statusPattern);
-    }
-}
-} // namespace
-
-bool ServerDb::seedDemoData()
+bool DatabaseManager::seedDemoData()
 {
     QSqlDatabase db = database();
 
-    // 三个演示站点(北京)
     struct SeedStation { const char *name; const char *addr; double lon; double lat; };
     const SeedStation sts[] = {
         { "朝阳公园充电站", "朝阳区公园路1号", 116.4821, 39.9333 },
@@ -275,41 +244,35 @@ bool ServerDb::seedDemoData()
     }
 
     if (stationIds.size() >= 3) {
-        seedChargers(db, stationIds[0], "SZ001", "fast", 60.0, 6, "");
-        seedChargers(db, stationIds[0], "SZ001-S", "slow", 7.0, 4, "");
-        seedChargers(db, stationIds[1], "SZ002", "fast", 120.0, 8, "");
-        seedChargers(db, stationIds[1], "SZ002-S", "slow", 7.0, 6, "");
-        seedChargers(db, stationIds[2], "SZ003", "fast", 60.0, 5, "");
-        seedChargers(db, stationIds[2], "SZ003-S", "slow", 3.5, 5, "");
+        seedChargers(db, stationIds[0], "SZ001",   "fast", 60.0,  6);
+        seedChargers(db, stationIds[0], "SZ001-S", "slow", 7.0,   4);
+        seedChargers(db, stationIds[1], "SZ002",   "fast", 120.0, 8);
+        seedChargers(db, stationIds[1], "SZ002-S", "slow", 7.0,   6);
+        seedChargers(db, stationIds[2], "SZ003",   "fast", 60.0,  5);
+        seedChargers(db, stationIds[2], "SZ003-S", "slow", 3.5,   5);
     }
 
     // 演示用户
-    QSqlQuery u(db);
-    const QString demoPassword = PasswordUtil::clientHash(QStringLiteral("Demo@123"));
     const char *userSql =
         "INSERT OR IGNORE INTO users (phone, password, nickname, balance)"
         " VALUES (?, ?, ?, ?)";
-    u.prepare(userSql);
-    u.addBindValue("13800138000"); u.addBindValue(demoPassword); u.addBindValue("张伟"); u.addBindValue(120.5);
-    u.exec();
-    u.prepare(userSql);
-    u.addBindValue("13912345678"); u.addBindValue(demoPassword); u.addBindValue("李娜"); u.addBindValue(66.0);
-    u.exec();
-    u.prepare(userSql);
-    u.addBindValue("13700001111"); u.addBindValue(demoPassword); u.addBindValue("王强"); u.addBindValue(0.0);
-    u.exec();
-
-    QSqlQuery patchPassword(db);
-    patchPassword.prepare("UPDATE users SET password = ?"
-                          " WHERE phone IN ('13800138000', '13912345678', '13700001111')"
-                          " AND (password IS NULL OR password = '')");
-    patchPassword.addBindValue(demoPassword);
-    patchPassword.exec();
+    {
+        QSqlQuery u(db);
+        u.prepare(userSql);
+        u.addBindValue("13800138000"); u.addBindValue(QString()); u.addBindValue("张伟"); u.addBindValue(120.5);
+        u.exec();
+        u.prepare(userSql);
+        u.addBindValue("13912345678"); u.addBindValue(QString()); u.addBindValue("李娜"); u.addBindValue(66.0);
+        u.exec();
+        u.prepare(userSql);
+        u.addBindValue("13700001111"); u.addBindValue(QString()); u.addBindValue("王强"); u.addBindValue(0.0);
+        u.exec();
+    }
 
     const QList<int> userIds = { 1, 2, 3 };
 
     // 近 30 天已支付订单(供营收折线图)
-    QDateTime now = QDateTime::currentDateTime();
+    const QDateTime now = QDateTime::currentDateTime();
     const QStringList chargerCodes = {
         "SZ001-01", "SZ001-02", "SZ002-01", "SZ002-02", "SZ003-01"
     };
@@ -351,7 +314,7 @@ bool ServerDb::seedDemoData()
         }
     }
 
-    qDebug() << "[ServerDb] 演示数据播种完成";
+    qDebug() << "[DatabaseManager] 演示数据播种完成";
     return true;
 }
 
@@ -359,14 +322,14 @@ bool ServerDb::seedDemoData()
 // 管理员
 // ---------------------------------------------------------------------------
 
-bool ServerDb::adminLogin(const QString &username, const QString &password)
+bool DatabaseManager::adminLogin(const QString &username, const QString &password)
 {
     QSqlQuery q(database());
     q.prepare("SELECT id FROM admins WHERE username = ? AND password = ?");
     q.addBindValue(username);
     q.addBindValue(password);
     if (!q.exec()) {
-        qWarning() << "[ServerDb] adminLogin 失败:" << q.lastError().text();
+        qWarning() << "[DatabaseManager] adminLogin 失败:" << q.lastError().text();
         return false;
     }
     return q.next();
@@ -376,37 +339,86 @@ bool ServerDb::adminLogin(const QString &username, const QString &password)
 // 用户
 // ---------------------------------------------------------------------------
 
-int ServerDb::registerUser(const QString &phone, const QString &pwdForStorage,
-                           const QString &nickname)
+int DatabaseManager::registerUser(const QString &phone, const QString &password,
+                                  const QString &nickname)
 {
-    if (phone.isEmpty() || nickname.isEmpty()) {
-        return -2;
-    }
-    // 手机号唯一检查
-    QSqlQuery c(database());
-    c.prepare("SELECT id FROM users WHERE phone = ?");
-    c.addBindValue(phone);
-    if (!c.exec()) {
-        return -2;
-    }
-    if (c.next()) {
-        return -1;   // 已存在
+    if (phone.isEmpty() || password.isEmpty() || nickname.isEmpty()) {
+        qDebug() << "注册信息不能为空";
+        return -1;
     }
 
-    QSqlQuery q(database());
-    q.prepare("INSERT INTO users (phone, password, nickname)"
-              " VALUES (?, ?, ?)");
-    q.addBindValue(phone);
-    q.addBindValue(pwdForStorage);
-    q.addBindValue(nickname);
-    if (!q.exec()) {
-        qWarning() << "[ServerDb] registerUser 失败:" << q.lastError().text();
-        return -2;
+    QSqlQuery checkQuery(database());
+    checkQuery.prepare("SELECT id FROM users WHERE phone = ?");
+    checkQuery.addBindValue(phone);
+    if (!checkQuery.exec()) {
+        qDebug() << "检查手机号失败：" << checkQuery.lastError().text();
+        return -1;
     }
-    return q.lastInsertId().toInt();
+    if (checkQuery.next()) {
+        qDebug() << "手机号已经注册";
+        return -1;
+    }
+
+    QSqlQuery query(database());
+    query.prepare("INSERT INTO users (phone, password, nickname)"
+                  " VALUES (?, ?, ?)");
+    query.addBindValue(phone);
+    query.addBindValue(password);
+    query.addBindValue(nickname);
+    if (!query.exec()) {
+        qDebug() << "用户注册失败：" << query.lastError().text();
+        return -1;
+    }
+
+    const int userId = query.lastInsertId().toInt();
+    qDebug() << "用户注册成功，ID =" << userId;
+    return userId;
 }
 
-bool ServerDb::userExistsByPhone(const QString &phone)
+bool DatabaseManager::getUserInfo(int userId, User &user)
+{
+    QSqlQuery query(database());
+    query.prepare("SELECT id, phone, nickname, avatar_path, balance, status, created_at"
+                  " FROM users WHERE id = ?");
+    query.addBindValue(userId);
+    if (!query.exec() || !query.next()) {
+        qDebug() << "用户不存在：" << userId;
+        return false;
+    }
+
+    user.id         = query.value("id").toInt();
+    user.phone      = query.value("phone").toString();
+    user.nickname   = query.value("nickname").toString();
+    user.avatarPath = query.value("avatar_path").toString();
+    user.balance    = query.value("balance").toDouble();
+    user.status     = query.value("status").toString();
+    user.createdAt  = query.value("created_at").toString();
+    // 依接口文档约定: 结果不包含密码, password 字段保持为空
+    user.password.clear();
+    return true;
+}
+
+bool DatabaseManager::getUserByPhone(const QString &phone, User &user)
+{
+    QSqlQuery query(database());
+    query.prepare("SELECT id, phone, password, nickname, avatar_path, balance,"
+                  " status, created_at FROM users WHERE phone = ?");
+    query.addBindValue(phone);
+    if (!query.exec() || !query.next()) {
+        return false;
+    }
+    user.id         = query.value("id").toInt();
+    user.phone      = query.value("phone").toString();
+    user.password   = query.value("password").toString();
+    user.nickname   = query.value("nickname").toString();
+    user.avatarPath = query.value("avatar_path").toString();
+    user.balance    = query.value("balance").toDouble();
+    user.status     = query.value("status").toString();
+    user.createdAt  = query.value("created_at").toString();
+    return true;
+}
+
+bool DatabaseManager::userExistsByPhone(const QString &phone)
 {
     QSqlQuery q(database());
     q.prepare("SELECT id FROM users WHERE phone = ?");
@@ -414,137 +426,115 @@ bool ServerDb::userExistsByPhone(const QString &phone)
     return q.exec() && q.next();
 }
 
-bool ServerDb::getUserByPhone(const QString &phone, UserInfo &out)
-{
-    QSqlQuery q(database());
-    q.prepare("SELECT id, phone, password, nickname, avatar_path, balance,"
-              " status, created_at FROM users WHERE phone = ?");
-    q.addBindValue(phone);
-    if (!q.exec() || !q.next()) {
-        return false;
-    }
-    out.id         = q.value("id").toInt();
-    out.phone      = q.value("phone").toString();
-    out.password   = q.value("password").toString();
-    out.nickname   = q.value("nickname").toString();
-    out.avatarPath = q.value("avatar_path").toString();
-    out.balance    = q.value("balance").toDouble();
-    out.status     = q.value("status").toString();
-    out.createdAt  = q.value("created_at").toString();
-    return true;
-}
-
-bool ServerDb::getUserById(int userId, UserInfo &out)
-{
-    QSqlQuery q(database());
-    q.prepare("SELECT id, phone, password, nickname, avatar_path, balance,"
-              " status, created_at FROM users WHERE id = ?");
-    q.addBindValue(userId);
-    if (!q.exec() || !q.next()) {
-        return false;
-    }
-    out.id         = q.value("id").toInt();
-    out.phone      = q.value("phone").toString();
-    out.password   = q.value("password").toString();
-    out.nickname   = q.value("nickname").toString();
-    out.avatarPath = q.value("avatar_path").toString();
-    out.balance    = q.value("balance").toDouble();
-    out.status     = q.value("status").toString();
-    out.createdAt  = q.value("created_at").toString();
-    return true;
-}
-
-bool ServerDb::updateNickname(int userId, const QString &nickname)
+bool DatabaseManager::updateNickname(int userId, const QString &nickname)
 {
     if (nickname.trimmed().isEmpty()) {
+        qDebug() << "昵称不能为空";
         return false;
     }
-    QSqlQuery q(database());
-    q.prepare("UPDATE users SET nickname = ? WHERE id = ?");
-    q.addBindValue(nickname);
-    q.addBindValue(userId);
-    return q.exec() && q.numRowsAffected() == 1;
+    QSqlQuery query(database());
+    query.prepare("UPDATE users SET nickname = ? WHERE id = ?");
+    query.addBindValue(nickname);
+    query.addBindValue(userId);
+    if (!query.exec() || query.numRowsAffected() != 1) {
+        qDebug() << "修改昵称失败：" << query.lastError().text();
+        return false;
+    }
+    qDebug() << "昵称修改成功";
+    return true;
 }
 
-bool ServerDb::updateAvatar(int userId, const QString &avatarPath)
+bool DatabaseManager::updateAvatar(int userId, const QString &avatarPath)
 {
     if (avatarPath.isEmpty()) {
+        qDebug() << "头像路径不能为空";
         return false;
     }
-    QSqlQuery q(database());
-    q.prepare("UPDATE users SET avatar_path = ? WHERE id = ?");
-    q.addBindValue(avatarPath);
-    q.addBindValue(userId);
-    return q.exec() && q.numRowsAffected() == 1;
+    QSqlQuery query(database());
+    query.prepare("UPDATE users SET avatar_path = ? WHERE id = ?");
+    query.addBindValue(avatarPath);
+    query.addBindValue(userId);
+    if (!query.exec() || query.numRowsAffected() != 1) {
+        qDebug() << "修改头像失败：" << query.lastError().text();
+        return false;
+    }
+    qDebug() << "头像修改成功";
+    return true;
 }
 
-bool ServerDb::recharge(int userId, double amount, double &newBalance)
+int DatabaseManager::userLogin(const QString &phone, const QString &password)
 {
-    if (amount <= 0) {
-        return false;
+    QSqlQuery query(database());
+    query.prepare("SELECT id, status FROM users WHERE phone = ? AND password = ?");
+    query.addBindValue(phone);
+    query.addBindValue(password);
+    if (!query.exec()) {
+        qDebug() << "用户登录查询失败：" << query.lastError().text();
+        return -1;
     }
-    QSqlDatabase db = database();
-
-    double oldBalance = 0.0;
-    {
-        QSqlQuery q(db);
-        q.prepare("SELECT balance FROM users WHERE id = ?");
-        q.addBindValue(userId);
-        if (!q.exec() || !q.next()) {
-            return false;
-        }
-        oldBalance = q.value(0).toDouble();
+    if (!query.next()) {
+        return -1;
     }
-    newBalance = oldBalance + amount;
-
-    if (!db.transaction()) {
-        return false;
+    if (query.value("status").toString() == "frozen") {
+        qDebug() << "用户账号被冻结";
+        return -1;
     }
-
-    QSqlQuery u(db);
-    u.prepare("UPDATE users SET balance = ? WHERE id = ?");
-    u.addBindValue(newBalance);
-    u.addBindValue(userId);
-    if (!u.exec() || u.numRowsAffected() != 1) {
-        db.rollback();
-        return false;
-    }
-
-    QSqlQuery w(db);
-    w.prepare("INSERT INTO wallet_records (user_id, type, amount, balance_after, order_no)"
-              " VALUES (?, 'recharge', ?, ?, NULL)");
-    w.addBindValue(userId);
-    w.addBindValue(amount);
-    w.addBindValue(newBalance);
-    if (!w.exec()) {
-        db.rollback();
-        return false;
-    }
-
-    return db.commit();
+    return query.value("id").toInt();
 }
 
-bool ServerDb::changePassword(int userId, const QString &newPwdForStorage)
+bool DatabaseManager::changePassword(int userId, const QString &oldPassword,
+                                     const QString &newPassword)
 {
-    QSqlQuery q(database());
-    q.prepare("UPDATE users SET password = ? WHERE id = ?");
-    q.addBindValue(newPwdForStorage);
-    q.addBindValue(userId);
-    return q.exec() && q.numRowsAffected() == 1;
+    if (newPassword.isEmpty()) {
+        qDebug() << "新密码不能为空";
+        return false;
+    }
+
+    QSqlQuery query(database());
+    query.prepare("SELECT password FROM users WHERE id = ?");
+    query.addBindValue(userId);
+    if (!query.exec()) {
+        qDebug() << "查询用户密码失败：" << query.lastError().text();
+        return false;
+    }
+    if (!query.next()) {
+        qDebug() << "用户不存在：" << userId;
+        return false;
+    }
+
+    // 数据库层按明文比对, 与 registerUser / userLogin 保持一致。
+    // 密码加盐哈希由服务器端负责, 数据库层只负责存取字符串。
+    if (query.value("password").toString() != oldPassword) {
+        qDebug() << "原密码错误";
+        return false;
+    }
+
+    QSqlQuery updateQuery(database());
+    updateQuery.prepare("UPDATE users SET password = ? WHERE id = ?");
+    updateQuery.addBindValue(newPassword);
+    updateQuery.addBindValue(userId);
+    if (!updateQuery.exec() || updateQuery.numRowsAffected() != 1) {
+        qDebug() << "更新密码失败：" << updateQuery.lastError().text();
+        return false;
+    }
+
+    qDebug() << "密码修改成功";
+    return true;
 }
 
-bool ServerDb::resetPasswordByPhone(const QString &phone, const QString &newPwdForStorage)
+bool DatabaseManager::resetPasswordByPhone(const QString &phone, const QString &newPassword)
 {
     QSqlQuery q(database());
     q.prepare("UPDATE users SET password = ? WHERE phone = ?");
-    q.addBindValue(newPwdForStorage);
+    q.addBindValue(newPassword);
     q.addBindValue(phone);
     return q.exec() && q.numRowsAffected() == 1;
 }
 
-QList<UserInfo> ServerDb::searchUsers(const QString &keyword, int page, int pageSize, int &total)
+QList<User> DatabaseManager::searchUsers(const QString &keyword, int page, int pageSize,
+                                         int &total)
 {
-    QList<UserInfo> list;
+    QList<User> list;
     QSqlDatabase db = database();
 
     const QString like = "%" + keyword.trimmed() + "%";
@@ -557,7 +547,7 @@ QList<UserInfo> ServerDb::searchUsers(const QString &keyword, int page, int page
             c.addBindValue(like);
             c.addBindValue(like);
         } else {
-            c.prepare("SELECT COUNT(*) FROM users");
+            c.exec("SELECT COUNT(*) FROM users");
         }
         if (c.exec() && c.next()) {
             total = c.value(0).toInt();
@@ -583,7 +573,7 @@ QList<UserInfo> ServerDb::searchUsers(const QString &keyword, int page, int page
         return list;
     }
     while (q.next()) {
-        UserInfo u;
+        User u;
         u.id         = q.value("id").toInt();
         u.phone      = q.value("phone").toString();
         u.nickname   = q.value("nickname").toString();
@@ -600,9 +590,9 @@ QList<UserInfo> ServerDb::searchUsers(const QString &keyword, int page, int page
 // 钱包流水
 // ---------------------------------------------------------------------------
 
-QList<WalletRecord> ServerDb::getWalletRecords(int userId, const QString &from,
-                                               const QString &to, int page,
-                                               int pageSize, int &total)
+QList<WalletRecord> DatabaseManager::getWalletRecords(int userId, const QString &from,
+                                                      const QString &to, int page,
+                                                      int pageSize, int &total)
 {
     QList<WalletRecord> list;
     QSqlDatabase db = database();
@@ -654,14 +644,14 @@ QList<WalletRecord> ServerDb::getWalletRecords(int userId, const QString &from,
 // 充电站
 // ---------------------------------------------------------------------------
 
-QList<StationInfo> ServerDb::getAllStations()
+QList<Station> DatabaseManager::getAllStations()
 {
-    QList<StationInfo> list;
+    QList<Station> list;
     QSqlQuery q(database());
     q.exec("SELECT id, name, address, longitude, latitude, created_at"
            " FROM stations ORDER BY id");
     while (q.next()) {
-        StationInfo s;
+        Station s;
         s.id        = q.value("id").toInt();
         s.name      = q.value("name").toString();
         s.address   = q.value("address").toString();
@@ -673,7 +663,7 @@ QList<StationInfo> ServerDb::getAllStations()
     return list;
 }
 
-QList<StationBrief> ServerDb::getStationBriefs()
+QList<StationBrief> DatabaseManager::getStationBriefs()
 {
     QList<StationBrief> list;
     QSqlQuery q(database());
@@ -698,9 +688,9 @@ QList<StationBrief> ServerDb::getStationBriefs()
     return list;
 }
 
-QList<StationBrief> ServerDb::getNearbyStations(double lat, double lon,
-                                                double radiusM, int limit, int offset,
-                                                int &total)
+QList<StationBrief> DatabaseManager::getNearbyStations(double lat, double lon,
+                                                       double radiusM, int limit,
+                                                       int offset, int &total)
 {
     QList<StationBrief> all = getStationBriefs();
     QList<StationBrief> filtered;
@@ -713,7 +703,6 @@ QList<StationBrief> ServerDb::getNearbyStations(double lat, double lon,
         }
     }
 
-    // 按距离由近及远
     std::sort(filtered.begin(), filtered.end(),
               [](const StationBrief &a, const StationBrief &b) {
                   return a.distanceM < b.distanceM;
@@ -728,9 +717,9 @@ QList<StationBrief> ServerDb::getNearbyStations(double lat, double lon,
     return page;
 }
 
-StationInfo ServerDb::getStationById(int stationId)
+Station DatabaseManager::getStationById(int stationId)
 {
-    StationInfo s;
+    Station s;
     QSqlQuery q(database());
     q.prepare("SELECT id, name, address, longitude, latitude, created_at"
               " FROM stations WHERE id = ?");
@@ -750,9 +739,9 @@ StationInfo ServerDb::getStationById(int stationId)
 // 充电桩
 // ---------------------------------------------------------------------------
 
-QList<ChargerInfo> ServerDb::getChargersByStation(int stationId)
+QList<Charger> DatabaseManager::getChargersByStation(int stationId)
 {
-    QList<ChargerInfo> list;
+    QList<Charger> list;
     QSqlQuery q(database());
     q.prepare("SELECT charger_code, station_id, type, power_kw, status,"
               " charge_count, total_duration FROM chargers"
@@ -762,7 +751,7 @@ QList<ChargerInfo> ServerDb::getChargersByStation(int stationId)
         return list;
     }
     while (q.next()) {
-        ChargerInfo c;
+        Charger c;
         c.chargerCode  = q.value("charger_code").toString();
         c.stationId    = q.value("station_id").toInt();
         c.type         = q.value("type").toString();
@@ -775,9 +764,9 @@ QList<ChargerInfo> ServerDb::getChargersByStation(int stationId)
     return list;
 }
 
-ChargerInfo ServerDb::getChargerByCode(const QString &chargerCode, bool &found)
+Charger DatabaseManager::getChargerByCode(const QString &chargerCode, bool &found)
 {
-    ChargerInfo c;
+    Charger c;
     found = false;
     QSqlQuery q(database());
     q.prepare("SELECT charger_code, station_id, type, power_kw, status,"
@@ -796,13 +785,13 @@ ChargerInfo ServerDb::getChargerByCode(const QString &chargerCode, bool &found)
     return c;
 }
 
-QList<StatusCount> ServerDb::getChargerStatusDistribution()
+QList<ChargerStatusCount> DatabaseManager::getChargerStatusDistribution()
 {
-    QList<StatusCount> list;
+    QList<ChargerStatusCount> list;
     QSqlQuery q(database());
     q.exec("SELECT status, COUNT(*) FROM chargers GROUP BY status");
     while (q.next()) {
-        StatusCount sc;
+        ChargerStatusCount sc;
         sc.status = q.value(0).toString();
         sc.count  = q.value(1).toInt();
         list.append(sc);
@@ -810,10 +799,10 @@ QList<StatusCount> ServerDb::getChargerStatusDistribution()
     return list;
 }
 
-QList<ChargerInfo> ServerDb::listChargers(int page, int pageSize, int &total,
-                                          const QString &stationFilter)
+QList<Charger> DatabaseManager::listChargers(int page, int pageSize, int &total,
+                                             const QString &stationFilter)
 {
-    QList<ChargerInfo> list;
+    QList<Charger> list;
     QSqlDatabase db = database();
 
     {
@@ -846,7 +835,7 @@ QList<ChargerInfo> ServerDb::listChargers(int page, int pageSize, int &total,
         return list;
     }
     while (q.next()) {
-        ChargerInfo c;
+        Charger c;
         c.chargerCode  = q.value("charger_code").toString();
         c.stationId    = q.value("station_id").toInt();
         c.type         = q.value("type").toString();
@@ -863,8 +852,8 @@ QList<ChargerInfo> ServerDb::listChargers(int page, int pageSize, int &total,
 // 订单
 // ---------------------------------------------------------------------------
 
-bool ServerDb::createOrder(const QString &orderNo, int userId,
-                           const QString &chargerCode, double unitPrice)
+bool DatabaseManager::createOrder(const QString &orderNo, int userId,
+                                  const QString &chargerCode, double unitPrice)
 {
     QSqlDatabase db = database();
 
@@ -921,8 +910,7 @@ bool ServerDb::createOrder(const QString &orderNo, int userId,
     return db.commit();
 }
 
-bool ServerDb::finishOrder(const QString &orderNo, double energyKwh,
-                           double &amount, QString &endTime, int &durationMinutes)
+bool DatabaseManager::finishOrder(const QString &orderNo, double energyKwh)
 {
     if (energyKwh < 0) {
         return false;
@@ -950,12 +938,12 @@ bool ServerDb::finishOrder(const QString &orderNo, double energyKwh,
 
     const QDateTime now = QDateTime::currentDateTime();
     qint64 secs = startTime.secsTo(now);
-    durationMinutes = static_cast<int>(secs / 60);
+    int durationMinutes = static_cast<int>(secs / 60);
     if (durationMinutes < 0) {
         durationMinutes = 0;
     }
-    amount = energyKwh * unitPrice;
-    endTime = now.toString("yyyy-MM-dd HH:mm:ss");
+    const double amount = energyKwh * unitPrice;
+    const QString endTime = now.toString("yyyy-MM-dd HH:mm:ss");
 
     if (!db.transaction()) {
         return false;
@@ -989,7 +977,7 @@ bool ServerDb::finishOrder(const QString &orderNo, double energyKwh,
     return db.commit();
 }
 
-bool ServerDb::payOrder(const QString &orderNo, double &newBalance)
+bool DatabaseManager::payOrder(const QString &orderNo)
 {
     QSqlDatabase db = database();
 
@@ -1022,7 +1010,7 @@ bool ServerDb::payOrder(const QString &orderNo, double &newBalance)
     if (balance < amount) {
         return false;
     }
-    newBalance = balance - amount;
+    const double newBalance = balance - amount;
 
     if (!db.transaction()) {
         return false;
@@ -1060,9 +1048,9 @@ bool ServerDb::payOrder(const QString &orderNo, double &newBalance)
     return db.commit();
 }
 
-OrderInfo ServerDb::getOrderByNo(const QString &orderNo, bool &found)
+Order DatabaseManager::getOrderByNo(const QString &orderNo, bool &found)
 {
-    OrderInfo o;
+    Order o;
     found = false;
     QSqlQuery q(database());
     q.prepare("SELECT order_no, user_id, charger_code, status, start_time, end_time,"
@@ -1086,9 +1074,9 @@ OrderInfo ServerDb::getOrderByNo(const QString &orderNo, bool &found)
     return o;
 }
 
-OrderInfo ServerDb::getUnfinishedOrder(int userId, bool &found)
+Order DatabaseManager::getUnfinishedOrder(int userId, bool &found)
 {
-    OrderInfo o;
+    Order o;
     found = false;
     QSqlQuery q(database());
     q.prepare("SELECT order_no, user_id, charger_code, status, start_time, end_time,"
@@ -1113,11 +1101,11 @@ OrderInfo ServerDb::getUnfinishedOrder(int userId, bool &found)
     return o;
 }
 
-QList<OrderInfo> ServerDb::listOrders(int page, int pageSize, int &total,
-                                      const QString &statusFilter,
-                                      const QString &phoneFilter)
+QList<Order> DatabaseManager::listOrders(int page, int pageSize, int &total,
+                                         const QString &statusFilter,
+                                         const QString &phoneFilter)
 {
-    QList<OrderInfo> list;
+    QList<Order> list;
     QSqlDatabase db = database();
 
     QString where;
@@ -1154,7 +1142,7 @@ QList<OrderInfo> ServerDb::listOrders(int page, int pageSize, int &total,
         return list;
     }
     while (q.next()) {
-        OrderInfo o;
+        Order o;
         o.orderNo         = q.value("order_no").toString();
         o.userId          = q.value("user_id").toInt();
         o.chargerCode     = q.value("charger_code").toString();
@@ -1176,11 +1164,10 @@ QList<OrderInfo> ServerDb::listOrders(int page, int pageSize, int &total,
 // 营收统计
 // ---------------------------------------------------------------------------
 
-RevenueSummary ServerDb::getRevenueSummary()
+RevenueSummary DatabaseManager::getRevenueSummary()
 {
     RevenueSummary r;
     QSqlQuery q(database());
-    // 只统计已支付订单
     q.exec("SELECT"
            " SUM(CASE WHEN date(created_at)=date('now') THEN amount ELSE 0 END),"
            " SUM(CASE WHEN strftime('%Y-%m', created_at)=strftime('%Y-%m','now')"
@@ -1195,12 +1182,11 @@ RevenueSummary ServerDb::getRevenueSummary()
     return r;
 }
 
-QList<QPair<QString, double>> ServerDb::getRevenueTrend(int days)
+QList<QPair<QString, double>> DatabaseManager::getRevenueTrend(int days)
 {
     QList<QPair<QString, double>> result;
     QSqlDatabase db = database();
 
-    // 先查聚合结果
     QMap<QString, double> byDay;
     {
         QSqlQuery q(db);
@@ -1216,7 +1202,6 @@ QList<QPair<QString, double>> ServerDb::getRevenueTrend(int days)
         }
     }
 
-    // 补全缺失日期为 0
     const QDate today = QDate::currentDate();
     for (int i = days - 1; i >= 0; --i) {
         const QDate d = today.addDays(-i);
@@ -1230,7 +1215,7 @@ QList<QPair<QString, double>> ServerDb::getRevenueTrend(int days)
 // 工具
 // ---------------------------------------------------------------------------
 
-QString ServerDb::nextOrderNo()
+QString DatabaseManager::nextOrderNo()
 {
     const QString date = QDate::currentDate().toString("yyyyMMdd");
     QSqlQuery q(database());
@@ -1241,4 +1226,157 @@ QString ServerDb::nextOrderNo()
         n = q.value(0).toInt();
     }
     return QString("C%1%2").arg(date).arg(n + 1, 4, 10, QChar('0'));
+}
+
+// ---------------------------------------------------------------------------
+// 充值(接口文档签名保持不变: recharge(userId, amount) -> bool)
+// ---------------------------------------------------------------------------
+
+bool DatabaseManager::recharge(int userId, double amount)
+{
+    if (amount <= 0) {
+        qDebug() << "充值金额必须大于 0";
+        return false;
+    }
+    QSqlDatabase db = database();
+
+    double oldBalance = 0.0;
+    {
+        QSqlQuery q(db);
+        q.prepare("SELECT balance FROM users WHERE id = ?");
+        q.addBindValue(userId);
+        if (!q.exec() || !q.next()) {
+            return false;
+        }
+        oldBalance = q.value("balance").toDouble();
+    }
+    const double newBalance = oldBalance + amount;
+
+    if (!db.transaction()) {
+        return false;
+    }
+
+    QSqlQuery u(db);
+    u.prepare("UPDATE users SET balance = ? WHERE id = ?");
+    u.addBindValue(newBalance);
+    u.addBindValue(userId);
+    if (!u.exec() || u.numRowsAffected() != 1) {
+        db.rollback();
+        return false;
+    }
+
+    QSqlQuery w(db);
+    w.prepare("INSERT INTO wallet_records (user_id, type, amount, balance_after, order_no)"
+              " VALUES (?, 'recharge', ?, ?, NULL)");
+    w.addBindValue(userId);
+    w.addBindValue(amount);
+    w.addBindValue(newBalance);
+    if (!w.exec()) {
+        db.rollback();
+        return false;
+    }
+
+    return db.commit();
+}
+
+// ---------------------------------------------------------------------------
+// 管理员写操作(冻结/解冻、增改、远程重启、惰性删除)
+// ---------------------------------------------------------------------------
+
+bool DatabaseManager::setUserStatus(int userId, const QString &status)
+{
+    if (status != "normal" && status != "frozen") {
+        return false;
+    }
+    QSqlQuery q(database());
+    q.prepare("UPDATE users SET status = ? WHERE id = ?");
+    q.addBindValue(status);
+    q.addBindValue(userId);
+    return q.exec() && q.numRowsAffected() == 1;
+}
+
+int DatabaseManager::createStation(const QString &name, const QString &address,
+                                   double longitude, double latitude)
+{
+    if (name.trimmed().isEmpty() || address.trimmed().isEmpty()) {
+        return -1;
+    }
+    QSqlQuery q(database());
+    q.prepare("INSERT INTO stations (name, address, longitude, latitude)"
+              " VALUES (?, ?, ?, ?)");
+    q.addBindValue(name.trimmed());
+    q.addBindValue(address.trimmed());
+    q.addBindValue(longitude);
+    q.addBindValue(latitude);
+    if (!q.exec()) {
+        return -1;
+    }
+    return q.lastInsertId().toInt();
+}
+
+bool DatabaseManager::updateStation(int id, const QString &name,
+                                    const QString &address,
+                                    double longitude, double latitude)
+{
+    if (name.trimmed().isEmpty() || address.trimmed().isEmpty()) {
+        return false;
+    }
+    QSqlQuery q(database());
+    q.prepare("UPDATE stations SET name=?, address=?, longitude=?, latitude=?"
+              " WHERE id=?");
+    q.addBindValue(name.trimmed());
+    q.addBindValue(address.trimmed());
+    q.addBindValue(longitude);
+    q.addBindValue(latitude);
+    q.addBindValue(id);
+    return q.exec() && q.numRowsAffected() == 1;
+}
+
+bool DatabaseManager::createCharger(const QString &chargerCode, int stationId,
+                                    const QString &type, double powerKw)
+{
+    if (chargerCode.trimmed().isEmpty() || stationId <= 0 || powerKw <= 0) {
+        return false;
+    }
+    QSqlQuery q(database());
+    q.prepare("INSERT INTO chargers (charger_code, station_id, type, power_kw, status)"
+              " VALUES (?, ?, ?, ?, 'idle')");
+    q.addBindValue(chargerCode.trimmed());
+    q.addBindValue(stationId);
+    q.addBindValue(type);
+    q.addBindValue(powerKw);
+    return q.exec();
+}
+
+bool DatabaseManager::updateCharger(const QString &chargerCode, const QString &type,
+                                    double powerKw)
+{
+    if (powerKw <= 0) {
+        return false;
+    }
+    QSqlQuery q(database());
+    q.prepare("UPDATE chargers SET type=?, power_kw=? WHERE charger_code=?");
+    q.addBindValue(type);
+    q.addBindValue(powerKw);
+    q.addBindValue(chargerCode);
+    return q.exec() && q.numRowsAffected() == 1;
+}
+
+bool DatabaseManager::setChargerStatus(const QString &chargerCode, const QString &status)
+{
+    QSqlQuery q(database());
+    q.prepare("UPDATE chargers SET status=? WHERE charger_code=?");
+    q.addBindValue(status);
+    q.addBindValue(chargerCode);
+    return q.exec() && q.numRowsAffected() == 1;
+}
+
+bool DatabaseManager::cancelOrder(const QString &orderNo)
+{
+    // 惰性删除: 仅"待支付"订单可取消, 物理不删
+    QSqlQuery q(database());
+    q.prepare("UPDATE orders SET status='cancelled'"
+              " WHERE order_no=? AND status='unpaid'");
+    q.addBindValue(orderNo);
+    return q.exec() && q.numRowsAffected() == 1;
 }

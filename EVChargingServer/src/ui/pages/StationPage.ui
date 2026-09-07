@@ -36,10 +36,14 @@
      <item>
       <widget class="QPushButton" name="addButton">
        <property name="text">
-        <string>新增电站（待开放）</string>
+        <string>新增电站</string>
        </property>
-       <property name="enabled">
-        <bool>false</bool>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="editButton">
+       <property name="text">
+        <string>编辑电站</string>
        </property>
       </widget>
      </item>

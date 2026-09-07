@@ -19,7 +19,7 @@ TEMPLATE  = app
 CONFIG   += c++14
 CONFIG   += thread
 
-# 源码树按 src 下的子目录引用, 例如 #include "db/ServerDb.h"
+# 源码树按 src 下的子目录引用, 例如 #include "db/databasemanager.h"
 INCLUDEPATH += src
 
 # 关闭 Qt3 兼容警告, 保持输出干净
@@ -27,52 +27,57 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     src/main.cpp \
-    src/common/AppConfig.cpp \
-    src/common/PasswordUtil.cpp \
-    src/common/Protocol.cpp \
-    src/db/ServerDb.cpp \
-    src/net/ClientSession.cpp \
-    src/net/SessionManager.cpp \
-    src/net/ServerCore.cpp \
-    src/ui/LauncherWindow.cpp \
-    src/ui/LoginDialog.cpp \
-    src/ui/MainWindow.cpp \
-    src/ui/pages/TrendChartWidget.cpp \
-    src/ui/pages/SalesPage.cpp \
-    src/ui/pages/StationPage.cpp \
-    src/ui/pages/PilePage.cpp \
-    src/ui/pages/UserPage.cpp \
-    src/ui/pages/OrderPage.cpp
+    src/common/appconfig.cpp \
+    src/common/passwordutil.cpp \
+    src/common/protocol.cpp \
+    src/db/databasemanager.cpp \
+    src/net/clientsession.cpp \
+    src/net/sessionmanager.cpp \
+    src/net/servercore.cpp \
+    src/ui/launcherwindow.cpp \
+    src/ui/logindialog.cpp \
+    src/ui/mainwindow.cpp \
+    src/ui/pages/trendchartwidget.cpp \
+    src/ui/pages/salespage.cpp \
+    src/ui/pages/stationpage.cpp \
+    src/ui/pages/stationeditdialog.cpp \
+    src/ui/pages/pilepage.cpp \
+    src/ui/pages/chargereditdialog.cpp \
+    src/ui/pages/userpage.cpp \
+    src/ui/pages/orderpage.cpp
 
 HEADERS += \
-    src/common/AppConfig.h \
-    src/common/PasswordUtil.h \
-    src/common/Protocol.h \
-    src/db/DbTypes.h \
-    src/db/ServerDb.h \
-    src/net/ClientSession.h \
-    src/net/SessionManager.h \
-    src/net/ServerCore.h \
-    src/ui/LauncherWindow.h \
-    src/ui/LoginDialog.h \
-    src/ui/MainWindow.h \
-    src/ui/pages/TrendChartWidget.h \
-    src/ui/pages/SalesPage.h \
-    src/ui/pages/StationPage.h \
-    src/ui/pages/PilePage.h \
-    src/ui/pages/UserPage.h \
-    src/ui/pages/OrderPage.h
+    src/common/appconfig.h \
+    src/common/passwordutil.h \
+    src/common/protocol.h \
+    src/db/databasemanager.h \
+    src/net/clientsession.h \
+    src/net/sessionmanager.h \
+    src/net/servercore.h \
+    src/ui/launcherwindow.h \
+    src/ui/logindialog.h \
+    src/ui/mainwindow.h \
+    src/ui/pages/trendchartwidget.h \
+    src/ui/pages/salespage.h \
+    src/ui/pages/stationpage.h \
+    src/ui/pages/stationeditdialog.h \
+    src/ui/pages/pilepage.h \
+    src/ui/pages/chargereditdialog.h \
+    src/ui/pages/userpage.h \
+    src/ui/pages/orderpage.h
 
 # Qt Designer 界面文件(双击即可在 Qt Creator 设计模式可视化编辑)
 FORMS += \
-    src/ui/LauncherWindow.ui \
-    src/ui/LoginDialog.ui \
-    src/ui/MainWindow.ui \
-    src/ui/pages/SalesPage.ui \
-    src/ui/pages/StationPage.ui \
-    src/ui/pages/PilePage.ui \
-    src/ui/pages/UserPage.ui \
-    src/ui/pages/OrderPage.ui
+    src/ui/launcherwindow.ui \
+    src/ui/logindialog.ui \
+    src/ui/mainwindow.ui \
+    src/ui/pages/salespage.ui \
+    src/ui/pages/stationpage.ui \
+    src/ui/pages/stationeditdialog.ui \
+    src/ui/pages/pilepage.ui \
+    src/ui/pages/chargereditdialog.ui \
+    src/ui/pages/userpage.ui \
+    src/ui/pages/orderpage.ui
 
 # uic 生成的 ui_*.h 需要能找到提升控件的头文件
 INCLUDEPATH += src/ui/pages

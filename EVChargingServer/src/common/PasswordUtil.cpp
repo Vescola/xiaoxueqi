@@ -1,5 +1,5 @@
-#include "common/PasswordUtil.h"
-#include "common/AppConfig.h"
+#include "common/passwordutil.h"
+#include "common/appconfig.h"
 
 #include <QCryptographicHash>
 #include <QUuid>

@@ -1,4 +1,4 @@
-#include "ui/pages/TrendChartWidget.h"
+#include "ui/pages/trendchartwidget.h"
 
 #include <QPainter>
 #include <QPainterPath>

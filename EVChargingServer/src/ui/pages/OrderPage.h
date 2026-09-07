@@ -24,6 +24,7 @@ public:
 
 private slots:
     void onSearch();
+    void onCancelOrder();
 
 private:
     Ui::OrderPage *ui;

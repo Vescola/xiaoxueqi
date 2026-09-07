@@ -148,7 +148,7 @@
   <customwidget>
    <class>TrendChartWidget</class>
    <extends>QWidget</extends>
-   <header>TrendChartWidget.h</header>
+   <header>trendchartwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

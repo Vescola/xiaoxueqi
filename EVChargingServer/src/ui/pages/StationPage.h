@@ -25,6 +25,8 @@ public:
 
 private slots:
     void onStationSelected(int row, int column);
+    void onAddStation();
+    void onEditStation();
 
 private:
     Ui::StationPage *ui;

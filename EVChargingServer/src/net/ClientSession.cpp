@@ -1,6 +1,6 @@
-#include "net/ClientSession.h"
+#include "net/clientsession.h"
 
-#include "common/Protocol.h"
+#include "common/protocol.h"
 
 #include <QTcpSocket>
 

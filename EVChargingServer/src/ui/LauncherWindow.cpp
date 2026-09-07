@@ -1,10 +1,10 @@
-#include "ui/LauncherWindow.h"
-#include "ui_LauncherWindow.h"
+#include "ui/launcherwindow.h"
+#include "ui_launcherwindow.h"
 
-#include "ui/LoginDialog.h"
-#include "ui/MainWindow.h"
-#include "net/ServerCore.h"
-#include "common/AppConfig.h"
+#include "ui/logindialog.h"
+#include "ui/mainwindow.h"
+#include "net/servercore.h"
+#include "common/appconfig.h"
 
 #include <QDateTime>
 

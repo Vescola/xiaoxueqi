@@ -1,9 +1,10 @@
-#include "ui/pages/OrderPage.h"
-#include "ui_OrderPage.h"
+#include "ui/pages/orderpage.h"
+#include "ui_orderpage.h"
 
-#include "db/ServerDb.h"
+#include "db/databasemanager.h"
 
 #include <QHeaderView>
+#include <QMessageBox>
 
 OrderPage::OrderPage(QWidget *parent)
     : QWidget(parent)
@@ -21,6 +22,7 @@ OrderPage::OrderPage(QWidget *parent)
 
     connect(ui->refreshButton, &QPushButton::clicked, this, &OrderPage::refresh);
     connect(ui->searchButton, &QPushButton::clicked, this, &OrderPage::onSearch);
+    connect(ui->cancelButton, &QPushButton::clicked, this, &OrderPage::onCancelOrder);
 
     refresh();
 }
@@ -35,6 +37,30 @@ void OrderPage::onSearch()
     refresh();
 }
 
+void OrderPage::onCancelOrder()
+{
+    const int row = ui->orderTable->currentRow();
+    if (row < 0) {
+        QMessageBox::information(this, QStringLiteral("提示"), QStringLiteral("请先选中一个订单"));
+        return;
+    }
+    QTableWidgetItem *noItem = ui->orderTable->item(row, 0);
+    if (!noItem) {
+        return;
+    }
+    const QString orderNo = noItem->text();
+
+    // 惰性删除: 仅"待支付"订单可取消(charging/paid 不可取消)
+    if (DatabaseManager::instance().cancelOrder(orderNo)) {
+        QMessageBox::information(this, QStringLiteral("成功"),
+                                 QStringLiteral("已取消订单 %1").arg(orderNo));
+        refresh();
+    } else {
+        QMessageBox::warning(this, QStringLiteral("失败"),
+                             QStringLiteral("仅「待支付」订单可取消"));
+    }
+}
+
 void OrderPage::refresh()
 {
     // 状态下拉 -> 数据库状态值
@@ -43,7 +69,7 @@ void OrderPage::refresh()
     const QString statusFilter = statusEn.value(idx);
 
     int total = 0;
-    const QList<OrderInfo> orders = ServerDb::instance().listOrders(
+    const QList<Order> orders = DatabaseManager::instance().listOrders(
         0, 1000, total, statusFilter, ui->phoneEdit->text());
 
     const QStringList statusCn = { "充电中", "待支付", "已支付", "已取消" };
@@ -51,7 +77,7 @@ void OrderPage::refresh()
 
     ui->orderTable->setRowCount(orders.size());
     for (int i = 0; i < orders.size(); ++i) {
-        const OrderInfo &o = orders[i];
+        const Order &o = orders[i];
         QString cn = o.status;
         const int si = statusKey.indexOf(o.status);
         if (si >= 0) cn = statusCn[si];

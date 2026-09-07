@@ -68,16 +68,16 @@ Qt Creator：打开 `EVChargingServer.pro` → 选 5.15.3 Kit → 构建 → 运
 | `CHECK_ORDER` / `START_CHARGE` / `STOP_CHARGE` / `CHARGE_STATUS` | 充电全流程（检查/发起/结算/查询） |
 | `HEARTBEAT` | 心跳 |
 
-### 5.2 管理员后台（只读查询 + 统计）
+### 5.2 管理员后台（查询 + 统计 + 写操作）
 
 - 销售业绩：今日/本月/总营收 + 近7日/近30日折线图（QPainter）
-- 充电站管理：站点列表 + 总桩数/在线率 + 站内电桩明细
-- 充电桩管理：状态分布（在用/闲置/故障 数量与占比）+ 电桩列表 + 状态筛选
-- 用户管理：列表 + 手机号模糊搜索
-- 订单管理：列表 + 按状态/手机号筛选
+- 充电站管理：站点列表 + 总桩数/在线率 + 站内电桩明细 + **新增/编辑电站**
+- 充电桩管理：状态分布（在用/闲置/故障 数量与占比）+ 电桩列表 + 状态筛选 + **新增/编辑/删除电桩 + 远程重启**
+- 用户管理：列表 + 手机号模糊搜索 + **冻结/解冻**
+- 订单管理：列表 + 按状态/手机号筛选 + **取消订单**
 
-> 依决策「先只做查询，写操作搁置」：新增电站、远程重启、冻结/解冻、增删改等
-> 写操作按钮已在 `.ui` 中保留但置灰，逻辑在 C++ 侧留 TODO 扩展点。
+> 写操作遵循「惰性删除」决策：删除用户=冻结、删除电桩=置离线、删除订单=取消，
+> 不物理删除、不加列。充电站删除因外键 RESTRICT 且无标记列，暂不提供。
 
 ## 6. 目录结构
 
@@ -89,43 +89,51 @@ EVChargingServer/
 └── src/
     ├── main.cpp                 # 入口: 配置->数据库->启动子线程->主界面
     ├── common/
-    │   ├── AppConfig.{h,cpp}    # ini 配置(QSettings)
-    │   ├── PasswordUtil.{h,cpp} # 口令处理(明文/加盐哈希可切换)
-    │   └── Protocol.{h,cpp}     # 命令码/错误码/封包解包(粘包处理)
+    │   ├── appconfig.{h,cpp}    # ini 配置(QSettings)
+    │   ├── passwordutil.{h,cpp} # 口令处理(明文/加盐哈希可切换)
+    │   └── protocol.{h,cpp}     # 命令码/错误码/封包解包(粘包处理)
     ├── db/
-    │   ├── DbTypes.h            # 与 database.sql 六表对齐的结构体
-    │   └── ServerDb.{h,cpp}     # ★自带数据层(每线程独立连接)
+    │   ├── databasemanager.h     # 数据库端模块接口(同学提供的代码, 已扩展完整)
+    │   └── databasemanager.cpp   # 数据访问实现(每线程独立连接)
     ├── net/
-    │   ├── SessionManager.{h,cpp} # token 会话(内存)
-    │   ├── ClientSession.{h,cpp}  # 单连接 + 粘包缓冲
-    │   └── ServerCore.{h,cpp}     # ★业务核心(子线程 + 协议路由)
+    │   ├── sessionmanager.{h,cpp} # token 会话(内存)
+    │   ├── clientsession.{h,cpp}  # 单连接 + 粘包缓冲
+    │   └── servercore.{h,cpp}     # ★业务核心(子线程 + 协议路由)
     └── ui/
-        ├── LauncherWindow.{ui,h,cpp}  # 主界面(常驻)
-        ├── LoginDialog.{ui,h,cpp}     # 管理员登录
-        ├── MainWindow.{ui,h,cpp}      # 管理后台窗口
+        ├── launcherwindow.{ui,h,cpp}  # 主界面(常驻)
+        ├── logindialog.{ui,h,cpp}     # 管理员登录
+        ├── mainwindow.{ui,h,cpp}      # 管理后台窗口
         └── pages/
-            ├── TrendChartWidget.{h,cpp} # QPainter 折线图
-            ├── SalesPage.{ui,h,cpp}
-            ├── StationPage.{ui,h,cpp}
-            ├── PilePage.{ui,h,cpp}
-            ├── UserPage.{ui,h,cpp}
-            └── OrderPage.{ui,h,cpp}
+            ├── trendchartwidget.{h,cpp} # QPainter 折线图
+            ├── salespage.{ui,h,cpp}
+            ├── stationpage.{ui,h,cpp}
+            ├── stationeditdialog.{ui,h,cpp}
+            ├── pilepage.{ui,h,cpp}
+            ├── chargereditdialog.{ui,h,cpp}
+            ├── userpage.{ui,h,cpp}
+            └── orderpage.{ui,h,cpp}
 ```
 
 ## 7. 与数据库端的关系（重要）
 
-本工程**不修改数据库端任何源码、不改动任何表结构**，而是自带数据层 `ServerDb`，
-直接读写 `database.sql` 定义的六张表：
+数据库端是服务器端的一个**模块**：同学提供的 `databasemanager.{h,cpp}` 已作为
+数据访问层集成进本工程的 `src/db/` 目录，服务器端通过
+`DatabaseManager::instance()` 这一内部 API 调用，直接读写 `database.sql`
+定义的六张表：
 
 `users` / `admins` / `stations` / `chargers` / `orders` / `wallet_records`
 
-首启时 `ServerDb` 会以**与 database.sql 完全一致**的语句建表，并灌入演示数据。
+- 保留《数据库端与服务器端调用接口文档 V1.0》的 13 个接口签名不变；
+- 为覆盖需求矩阵 / 通信协议的全部数据操作，额外补充了流水查询、营收统计、
+  未完成订单、附近站点、订单/电桩/用户列表等接口（见 `databasemanager.h`）；
+- 首启时 `ensureSchemaAndSeed()` 会以**与 database.sql 完全一致**的语句建表，
+  并灌入演示数据。
 
-### 已知数据库端 Demo 问题（未改动，仅记录）
+### 已修复的数据库端问题
 
-数据库端 `demo1/databasemanager.{h,cpp}` 目前无法编译，问题见项目内
-《数据库端能力缺口清单.md》第 1 节（Money 类型先用后定义、`hashPassword` 未定义、
-9 处 `bool`/`DbErrorCode` 签名不匹配、`changePassword` 查询不存在的 `password_hash` 列等）。
+原 `databasemanager.{h,cpp}` 无法编译，已修复：`Money` 类型先用后定义、
+`hashPassword` 未定义、9 处 `bool`/`DbErrorCode` 签名不匹配、`changePassword`
+查询不存在的 `password_hash` 列等。详见项目内《数据库端能力缺口清单.md》。
 
 ## 8. 协议偏差说明（需与用户端约定一致）
 
@@ -146,9 +154,9 @@ EVChargingServer/
 `PasswordUtil` 会自动改为 `SHA256(客户端哈希 + 随机盐)` 并存 `salt$hash` 复合串，
 **无需改任何业务代码**。切换后旧明文账号需重置口令。
 
-## 10. 后续开放点（写操作）
+## 10. 后续开放点
 
-1. 用户冻结/解冻：`ServerDb` 已预留 `searchUsers` 分页，补 `setUserStatus` 即可；
-2. 远程重启电桩：补 `restartCharger`（`UPDATE chargers SET status='idle'`）；
-3. 新增电站/电桩：补对应 INSERT（注意外键 RESTRICT）；
-4. 订单写操作：补状态流转 SQL。
+1. 头像上传（.jpg）：协议未定义文件传输，属用户端功能，服务器端暂不实现；
+2. 电桩故障→异常订单主动上报（需求矩阵 #25，归属"设备模拟"侧）；
+3. 充电站删除：因外键 RESTRICT 且无标记列，如需物理/惰性删除需先改表结构；
+4. 管理员"新增/编辑用户"：用户侧已有注册与改昵称，管理员端暂不重复提供。

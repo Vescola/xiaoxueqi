@@ -1,7 +1,7 @@
-#include "ui/LoginDialog.h"
-#include "ui_LoginDialog.h"
+#include "ui/logindialog.h"
+#include "ui_logindialog.h"
 
-#include "net/ServerCore.h"
+#include "net/servercore.h"
 
 LoginDialog::LoginDialog(ServerCore *core, QWidget *parent)
     : QDialog(parent)

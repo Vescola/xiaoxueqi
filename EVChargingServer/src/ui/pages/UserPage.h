@@ -25,8 +25,12 @@ public:
 
 private slots:
     void onSearch();
+    void onFreeze();
+    void onUnfreeze();
 
 private:
+    int selectedUserId() const;   // 返回当前选中行的用户ID, 未选中返回 -1
+
     Ui::UserPage *ui;
 };
 

@@ -1,6 +1,6 @@
-#include "net/SessionManager.h"
+#include "net/sessionmanager.h"
 
-#include "common/AppConfig.h"
+#include "common/appconfig.h"
 
 #include <QUuid>
 

@@ -25,8 +25,15 @@ public:
 
 private slots:
     void onFilterChanged();
+    void onRestart();
+    void onAddCharger();
+    void onEditCharger();
+    void onDeleteCharger();
 
 private:
+    int  selectedChargerRow() const;   // 返回当前选中行, 未选中返回 -1
+    QString selectedChargerCode() const;
+
     Ui::PilePage *ui;
 };
 

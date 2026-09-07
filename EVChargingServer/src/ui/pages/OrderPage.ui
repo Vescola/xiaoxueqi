@@ -84,6 +84,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="cancelButton">
+       <property name="text">
+        <string>取消订单</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="refreshButton">
        <property name="text">
         <string>刷新</string>
