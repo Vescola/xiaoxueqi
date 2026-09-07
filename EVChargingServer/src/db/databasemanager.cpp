@@ -259,13 +259,13 @@ bool DatabaseManager::seedDemoData()
     {
         QSqlQuery u(db);
         u.prepare(userSql);
-        u.addBindValue("13800138000"); u.addBindValue(QString()); u.addBindValue("张伟"); u.addBindValue(120.5);
+        u.addBindValue("13800138000"); u.addBindValue(QString("123")); u.addBindValue("张伟"); u.addBindValue(120.5);
         u.exec();
         u.prepare(userSql);
-        u.addBindValue("13912345678"); u.addBindValue(QString()); u.addBindValue("李娜"); u.addBindValue(66.0);
+        u.addBindValue("13912345678"); u.addBindValue(QString("123")); u.addBindValue("李娜"); u.addBindValue(66.0);
         u.exec();
         u.prepare(userSql);
-        u.addBindValue("13700001111"); u.addBindValue(QString()); u.addBindValue("王强"); u.addBindValue(0.0);
+        u.addBindValue("13700001111"); u.addBindValue(QString("123")); u.addBindValue("王强"); u.addBindValue(0.0);
         u.exec();
     }
 
