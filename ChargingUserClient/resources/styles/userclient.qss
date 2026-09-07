@@ -1,0 +1,220 @@
+QMainWindow {
+    background: #f4f7fb;
+}
+
+QWidget {
+    color: #1f2937;
+    font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial;
+    font-size: 18px;
+}
+
+QLabel#titleLabel {
+    font-size: 30px;
+    font-weight: 700;
+    color: #10243e;
+}
+
+QLabel#statusLabel {
+    font-size: 18px;
+    color: #4b5563;
+}
+
+QLabel#loginTitleLabel,
+QLabel#registerTitleLabel,
+QLabel#resetTitleLabel,
+QLabel#stationDetailNameLabel {
+    font-size: 24px;
+    font-weight: 700;
+    color: #10243e;
+}
+
+QFrame#loginCard,
+QFrame#registerCard,
+QFrame#resetCard,
+QFrame#stationSearchPanel,
+QFrame#detailPanel,
+QFrame#walletPanel,
+QFrame#profilePanel,
+QFrame#chargePanel,
+QFrame#headerAvatarCard,
+QFrame#currentUserCard,
+QFrame#walletSummaryCard {
+    background: #ffffff;
+    border: 1px solid #dce4ee;
+    border-radius: 8px;
+}
+
+QFrame#loginCard,
+QFrame#registerCard,
+QFrame#resetCard {
+    background: rgba(255, 255, 255, 232);
+    border: 1px solid rgba(186, 214, 244, 210);
+}
+
+QFrame#currentUserCard {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #ffffff, stop:1 #edf6ff);
+    border-color: #b8d7f6;
+}
+
+QFrame#headerAvatarCard {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #ffffff, stop:1 #eff6ff);
+    border-color: #b8d7f6;
+}
+
+QFrame#walletSummaryCard {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #ffffff, stop:1 #ecfdf5);
+    border-color: #a7e4cf;
+}
+
+QLabel#currentUserTitleLabel,
+QLabel#walletSummaryTitleLabel {
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+QLabel#helloLabel {
+    font-size: 22px;
+    font-weight: 700;
+    color: #10243e;
+}
+
+QLabel#headerBalanceLabel {
+    font-size: 24px;
+    font-weight: 800;
+    color: #0f766e;
+}
+
+QLineEdit,
+QComboBox,
+QDateEdit,
+QDoubleSpinBox {
+    min-height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 4px 8px;
+    background: #ffffff;
+}
+
+QLineEdit:focus,
+QComboBox:focus,
+QDateEdit:focus,
+QDoubleSpinBox:focus {
+    border-color: #1d4ed8;
+}
+
+QPushButton {
+    min-height: 42px;
+    padding: 8px 18px;
+    border: 1px solid #1d4ed8;
+    border-radius: 6px;
+    background: #2563eb;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+QPushButton:hover {
+    background: #1d4ed8;
+}
+
+QPushButton:disabled {
+    background: #cbd5e1;
+    border-color: #cbd5e1;
+    color: #64748b;
+}
+
+QPushButton#showRegisterButton,
+QPushButton#forgotButton,
+QPushButton#backLoginButton,
+QPushButton#backLoginButton2,
+QPushButton#backStationsButton,
+QPushButton#queryTransButton,
+QPushButton#cancelProfileButton,
+QPushButton#cancelPasswordButton {
+    color: #1d4ed8;
+    background: #eef4ff;
+}
+
+QPushButton#logoutButton,
+QPushButton#faultButton {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+QPushButton#logoutButton:hover,
+QPushButton#faultButton:hover {
+    background: #b91c1c;
+}
+
+QPushButton[nav="true"] {
+    background: #ffffff;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+
+QPushButton[nav="true"]:checked {
+    background: #0f766e;
+    color: #ffffff;
+    border-color: #0f766e;
+}
+
+QListWidget,
+QTableWidget,
+QTextBrowser {
+    background: #ffffff;
+    border: 1px solid #dce4ee;
+    border-radius: 6px;
+    alternate-background-color: #f8fafc;
+}
+
+QListWidget::item {
+    padding: 14px;
+    border-bottom: 1px solid #e5edf6;
+}
+
+QListWidget::item:selected {
+    background: #dff7f1;
+    color: #064e3b;
+}
+
+QHeaderView::section {
+    background: #10243e;
+    color: #ffffff;
+    padding: 10px;
+    border: 0;
+    font-weight: 600;
+}
+
+QProgressBar {
+    height: 28px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #edf2f7;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    border-radius: 5px;
+    background: #10b981;
+}
+
+QLabel#balanceLabel {
+    font-size: 34px;
+    font-weight: 700;
+    color: #0f766e;
+}
+
+QLabel#avatarLabel,
+QLabel#headerAvatarLabel {
+    background: #e5e7eb;
+    color: #64748b;
+    border: 2px solid #dbeafe;
+}
+
+QLabel#avatarLabel {
+    border-radius: 36px;
+}
+
+QLabel#headerAvatarLabel {
+    border-radius: 34px;
+}

@@ -1,0 +1,55 @@
+# Build outputs
+build/
+build-*/
+debug/
+release/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.lib
+Makefile
+.qmake.stash
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# Qt Creator user files
+*.pro.user
+*.pro.user.*
+*.autosave
+
+# Generated logs and temporary validation output
+*.log
+*_check*.txt
+*_status.txt
+*_result.txt
+*_files.txt
+check_socket_pair.out
+display_probe.txt
+qtcreator_status.txt
+socket_pair_status.txt
+start_server_offscreen.out
+validate_*.txt
+validate_*.log
+
+# Archives from packaging or transfer
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# Local databases/runtime files
+*.db
+*.sqlite
+*.sqlite3
+config.ini
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

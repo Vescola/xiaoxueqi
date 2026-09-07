@@ -1,0 +1,29 @@
+; 东软电动汽车充电桩应用管理平台 - 服务器端配置示例
+; 程序首次运行会自动按以下默认值生成 config.ini
+; 修改后需重启服务器端生效
+
+[Network]
+ListenPort=8888
+MaxPendingConn=128
+HeartbeatTimeoutSec=120
+
+[Database]
+; 相对路径会解析到程序所在目录
+DbPath=charging.db
+; 首次运行且库为空时, 自动建表并灌入演示数据
+AutoSeed=true
+
+[Billing]
+; 快充/慢充两档价(元/kWh)。数据库无价格字段, 依决策在此配置
+PriceFast=1.80
+PriceSlow=0.90
+
+[Security]
+; plain = 明文哈希比对(当前默认); saltedhash = SHA256(客户端哈希+随机盐)
+PasswordMode=plain
+TokenValidDays=7
+
+[Sms]
+; 联调验证码: 非空时所有手机号固定返回该码(否则随机 4 位并打印日志)
+DevCode=1234
+ValidSec=300

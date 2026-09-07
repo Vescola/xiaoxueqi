@@ -1,0 +1,52 @@
+一键验证脚本说明
+
+入口脚本:
+  validate_all.ps1
+
+默认验证内容:
+  1. 刷新 ChargingUserClient_用户端.zip 和 EVChargingServer.zip。
+  2. 检查并启动 Ubuntu 虚拟机。
+  3. 将用户端、服务端、socket 测试程序同步到虚拟机。
+  4. 在 Ubuntu 中用 qmake6/qmake 编译 EVChargingServer。
+  5. 在 Ubuntu 中用 qmake6/qmake 编译 ChargingUserClient。
+  6. 以 QT_QPA_PLATFORM=offscreen 后台启动服务端。
+  7. 检查服务端是否监听 8888 端口。
+  8. 编译并运行 socket_smoke，验证用户端协议层能登录、查余额、查站点、查桩位。
+  9. 将验证日志复制回本文件夹。
+
+安全说明:
+  脚本不会删除虚拟机里的旧项目目录；每次验证会在 /home/bit/charging_validation_runs 下新建时间戳目录。
+  如果 8888 端口已经有服务端监听，会复用当前服务端；如果没有监听，才会启动本次新编译的服务端。
+
+运行方式:
+  在 PowerShell 中进入本文件夹后执行:
+    .\validate_all.ps1
+
+常用参数:
+  .\validate_all.ps1 -OpenConsole
+    验证时同时打开 VMware 控制台窗口。
+
+  .\validate_all.ps1 -SkipPackage
+    不重新打包，直接使用当前 zip。
+
+  .\validate_all.ps1 -NoStart
+    不自动启动虚拟机，适合确认虚拟机已经启动时使用。
+
+输出文件:
+  validate_summary.txt
+  validate_server_build.log
+  validate_client_build.log
+  validate_server_runtime.log
+  validate_process_status.txt
+  validate_smoke_build.log
+  validate_smoke_result.txt
+
+成功标志:
+  validate_summary.txt 中出现 VALIDATION_OK。
+  validate_smoke_result.txt 中出现 SOCKET_OK。
+
+测试账号:
+  用户端账号: 13800138000
+  用户端密码: Demo@123
+  Ubuntu 账号: bit
+  Ubuntu 密码: 123456

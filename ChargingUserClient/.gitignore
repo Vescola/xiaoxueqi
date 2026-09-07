@@ -1,0 +1,34 @@
+# Qt Creator local settings
+*.pro.user
+*.pro.user.*
+CMakeLists.txt.user*
+
+# Build output
+build-*/
+debug/
+release/
+bin/
+obj/
+Makefile
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.app/
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# Runtime data generated locally
+*.db
+*.sqlite
+*.sqlite3
+*.log
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
