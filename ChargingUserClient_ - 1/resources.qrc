@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/styles/userclient.qss</file>
+        <file>resources/icons/app.svg</file>
+        <file>resources/icons/station.svg</file>
+        <file>resources/icons/wallet.svg</file>
+        <file>resources/icons/profile.svg</file>
+        <file>resources/icons/charge.svg</file>
+        <file>resources/images/auth_background.png</file>
+        <file>resources/images/default_avatar.jpg</file>
+    </qresource>
+</RCC>
