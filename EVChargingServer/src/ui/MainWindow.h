@@ -19,11 +19,15 @@ class MainWindow : public QWidget
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    void closeEvent(QCloseEvent *e) override;
     ~MainWindow() override;
 
 private slots:
     void onNavChanged(int index);
     void onLogout();
+
+signals:
+    void closeWindow();
 
 private:
     Ui::MainWindow *ui;

@@ -29,7 +29,6 @@ void AppConfig::load(const QString &cfgPath)
         set.beginGroup("Network");
         set.setValue("ListenPort",        m_listenPort);
         set.setValue("MaxPendingConn",    m_maxPendingConn);
-        set.setValue("HeartbeatTimeoutSec", m_heartbeatTimeoutSec);
         set.endGroup();
 
         set.beginGroup("Database");
@@ -60,8 +59,6 @@ void AppConfig::load(const QString &cfgPath)
     m_listenPort          = static_cast<quint16>(
                                 set.value("ListenPort", m_listenPort).toUInt());
     m_maxPendingConn      = set.value("MaxPendingConn", m_maxPendingConn).toInt();
-    m_heartbeatTimeoutSec = set.value("HeartbeatTimeoutSec",
-                                      m_heartbeatTimeoutSec).toInt();
     set.endGroup();
 
     set.beginGroup("Database");

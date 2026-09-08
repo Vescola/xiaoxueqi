@@ -76,9 +76,6 @@ private:
     void handleStopCharge(ClientSession *s, const QVariantMap &p, quint32 rid);
     void handleChargeStatus(ClientSession *s, const QVariantMap &p, quint32 rid);
 
-    // ---- 心跳 ----
-    void handleHeartbeat(ClientSession *s, const QVariantMap &p, quint32 rid);
-
     // ---- 公共 ----
     // 从 params 取 token 校验, 有效返回 userId, 无效返回 -1(并已回错误响应)
     int requireLogin(ClientSession *s, const QVariantMap &p, quint32 rid);

@@ -135,7 +135,6 @@ void ServerCore::onPacketReceived(ClientSession *session, quint16 cmd,
     case START_CHARGE_REQ:    handleStartCharge(session, params, requestId); break;
     case STOP_CHARGE_REQ:     handleStopCharge(session, params, requestId); break;
     case CHARGE_STATUS_REQ:   handleChargeStatus(session, params, requestId); break;
-    case HEARTBEAT_REQ:       handleHeartbeat(session, params, requestId); break;
     default:
         replyError(session, requestId, Protocol::Err::UNKNOWN,
                    QStringLiteral("未知命令码 0x%1").arg(cmd, 4, 16, QChar('0')));
@@ -781,19 +780,6 @@ void ServerCore::handleChargeStatus(ClientSession *s, const QVariantMap &p, quin
     r.insert("chargedKwh", order.energyKwh);
     r.insert("startTime", order.startTime);
     reply(s, Cmd::CHARGE_STATUS_RESP, r, rid);
-}
-
-// ---------------------------------------------------------------------------
-// 心跳
-// ---------------------------------------------------------------------------
-
-void ServerCore::handleHeartbeat(ClientSession *s, const QVariantMap &p, quint32 rid)
-{
-    Q_UNUSED(p);
-    QVariantMap r;
-    r.insert("code", Protocol::Err::OK);
-    r.insert("serverTime", QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
-    reply(s, Protocol::Cmd::HEARTBEAT_RESP, r, rid);
 }
 
 // ---------------------------------------------------------------------------

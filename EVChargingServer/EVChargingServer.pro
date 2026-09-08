@@ -1,14 +1,3 @@
-#-------------------------------------------------------------
-# 东软电动汽车充电桩应用管理平台 - PC 服务器端
-#
-# 目标环境 : Qt Creator 6.0.2 / Qt 5.15.3 (GCC 11.2.0, 64 bit)
-# 构建系统 : qmake
-# 依赖模块 : widgets + sql + network
-#            图表由 QPainter 手绘, 不依赖 Qt Charts 模块
-#
-# 打开方式 : Qt Creator -> 打开工程 -> 选择本 .pro -> 选 5.15.3 Kit
-#-------------------------------------------------------------
-
 QT       += core gui widgets sql network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -34,6 +23,7 @@ SOURCES += \
     src/net/clientsession.cpp \
     src/net/sessionmanager.cpp \
     src/net/servercore.cpp \
+    src/ui/confirmclosingdialog.cpp \
     src/ui/launcherwindow.cpp \
     src/ui/logindialog.cpp \
     src/ui/mainwindow.cpp \
@@ -54,6 +44,7 @@ HEADERS += \
     src/net/clientsession.h \
     src/net/sessionmanager.h \
     src/net/servercore.h \
+    src/ui/confirmclosingdialog.h \
     src/ui/launcherwindow.h \
     src/ui/logindialog.h \
     src/ui/mainwindow.h \
@@ -66,8 +57,9 @@ HEADERS += \
     src/ui/pages/userpage.h \
     src/ui/pages/orderpage.h
 
-# Qt Designer 界面文件(双击即可在 Qt Creator 设计模式可视化编辑)
+# Qt Designer 界面文件
 FORMS += \
+    src/ui/confirmclosingdialog.ui \
     src/ui/launcherwindow.ui \
     src/ui/logindialog.ui \
     src/ui/mainwindow.ui \

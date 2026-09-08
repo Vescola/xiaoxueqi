@@ -69,9 +69,8 @@ namespace Cmd {
     // 服务器主动推送 0x5000~0x5FFF(预留)
     const quint16 CHARGE_STATUS_NOTIFY = 0x5001;
 
-    // 心跳 0x6000~0x6FFF
-    const quint16 HEARTBEAT_REQ      = 0x6001;
-    const quint16 HEARTBEAT_RESP     = 0x6002;
+    // 注: 原协议 0x6000~0x6FFF 为心跳(HEARTBEAT_REQ/RESP), 本工程未实现,
+    // 收到该命令码会走 default 分支返回"未知命令码"。客户端不应发送。
 
     // 通用错误响应 0x9FFF
     const quint16 ERROR_RESP         = 0x9FFF;

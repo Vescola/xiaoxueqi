@@ -4,8 +4,8 @@
 
 [Network]
 ListenPort=8888
+; 预留: 暂未接入(QTcpServer 仍用默认挂起队列长度)
 MaxPendingConn=128
-HeartbeatTimeoutSec=120
 
 [Database]
 ; 相对路径会解析到程序所在目录

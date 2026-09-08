@@ -66,7 +66,6 @@ Qt Creator：打开 `EVChargingServer.pro` → 选 5.15.3 Kit → 构建 → 运
 | `RECHARGE` / `BALANCE_QUERY` / `TRANSACTION` | 充值、余额、流水分页 |
 | `STATIONS` / `STATION_DETAIL` | 附近站点（Haversine 距离）+ 站点电桩明细 |
 | `CHECK_ORDER` / `START_CHARGE` / `STOP_CHARGE` / `CHARGE_STATUS` | 充电全流程（检查/发起/结算/查询） |
-| `HEARTBEAT` | 心跳 |
 
 ### 5.2 管理员后台（查询 + 统计 + 写操作）
 
@@ -146,6 +145,7 @@ EVChargingServer/
 | 站点价格 | 单字段 `price` | 两档价：主价=快充价，另附 `priceFast`/`priceSlow` |
 | `targetKwh`/`targetPercent` | 订单表无对应列 | 仅用于预估费用，不落库 |
 | 充电电量计量 | 真实设备上报 | 服务端按"桩功率×时长×0.85"模拟 |
+| 心跳 `HEARTBEAT` | 心跳命令 0x6001 / 0x6002 | 服务端**未实现**，收到会返回"未知命令码"，客户端不应发送 |
 
 ## 9. 密码安全（当前阶段）
 

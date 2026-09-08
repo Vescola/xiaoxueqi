@@ -67,3 +67,8 @@ void MainWindow::onLogout()
     // 关闭本窗口 = 退出登录(主界面不关闭, 后台服务持续运行)
     close();
 }
+
+void MainWindow::closeEvent(QCloseEvent *e){
+    emit closeWindow();
+    QWidget::closeEvent(e);
+}

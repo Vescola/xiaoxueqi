@@ -58,11 +58,11 @@
    </item>
    <item>
     <widget class="QLabel" name="errorLabel">
-     <property name="text">
-      <string/>
-     </property>
      <property name="styleSheet">
       <string notr="true">color: #c0392b;</string>
+     </property>
+     <property name="text">
+      <string/>
      </property>
     </widget>
    </item>

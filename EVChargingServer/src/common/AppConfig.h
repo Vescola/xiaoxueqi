@@ -22,7 +22,6 @@ public:
     // ---- 网络 ----
     quint16 listenPort() const      { return m_listenPort; }
     int     maxPendingConn() const  { return m_maxPendingConn; }
-    int     heartbeatTimeoutSec() const { return m_heartbeatTimeoutSec; }
 
     // ---- 数据库 ----
     QString dbPath() const          { return m_dbPath; }
@@ -66,7 +65,6 @@ private:
 
     quint16 m_listenPort        = 8888;
     int     m_maxPendingConn    = 128;
-    int     m_heartbeatTimeoutSec = 120;
 
     QString m_dbPath            = "charging.db";
     bool    m_autoSeed          = true;

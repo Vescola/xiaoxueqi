@@ -5,6 +5,7 @@
 #include "ui/mainwindow.h"
 #include "net/servercore.h"
 #include "common/appconfig.h"
+#include "confirmclosingdialog.h"
 
 #include <QDateTime>
 
@@ -31,7 +32,7 @@ LauncherWindow::LauncherWindow(ServerCore *core, QWidget *parent)
     connect(ui->quitButton, &QPushButton::clicked,
             this, &LauncherWindow::onQuitClicked);
 
-    onLogMessage(QStringLiteral("服务器端已就绪 (QPainter 图表 / SQLite / Socket)"));
+    onLogMessage(QStringLiteral("服务器端已就绪"));
 }
 
 LauncherWindow::~LauncherWindow()
@@ -49,6 +50,12 @@ void LauncherWindow::onLoginClicked()
         console->setAttribute(Qt::WA_DeleteOnClose);
         console->show();       // 关闭该窗口 = 退出登录
         onLogMessage(QStringLiteral("管理员已登录管理后台"));
+        ui->loginButton->setText("已登陆");
+        ui->loginButton->setDisabled(true);
+        connect(console, &MainWindow::closeWindow, this, [=](){
+            ui->loginButton->setText("登陆管理后端");
+            ui->loginButton->setEnabled(true);
+        });
     }
 }
 
@@ -67,4 +74,14 @@ void LauncherWindow::onLogMessage(const QString &msg)
 void LauncherWindow::onConnectionCountChanged(int count)
 {
     ui->connLabel->setText(QStringLiteral("在线连接：%1").arg(count));
+}
+
+void LauncherWindow::closeEvent(QCloseEvent *e){
+    ConfirmClosingDialog dlg("您要关闭管理程序吗？", this);
+    if(dlg.exec() == QDialog::Accepted){
+        e->accept();
+    }
+    else{
+        e->ignore();
+    }
 }
