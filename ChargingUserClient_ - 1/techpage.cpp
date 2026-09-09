@@ -30,11 +30,6 @@ void TechPage::paintEvent(QPaintEvent *event)
     const QPoint topLeft((width() - scaled.width()) / 2, (height() - scaled.height()) / 2);
     painter.drawPixmap(topLeft, scaled);
 
-    // 深色主题：在浅蓝底图上叠加深色半透明蒙层，压暗为深蓝夜空效果
-    QColor overlay(QStringLiteral("#0a131f"));
-    overlay.setAlpha(186);
-    painter.fillRect(rect(), overlay);
-
     const QString title = QStringLiteral("东软电动汽车充电桩应用管理平台");
     QFont titleFont = painter.font();
     titleFont.setPointSize(32);

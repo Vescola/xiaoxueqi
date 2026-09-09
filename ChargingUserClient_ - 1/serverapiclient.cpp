@@ -38,19 +38,13 @@ int ServerApiClient::userId() const
 
 bool ServerApiClient::ping(QString *message)
 {
-    // 服务端未实现心跳命令(0x6xxx), 发送会走 default 分支回 0x9FFF 未知命令码。
-    // 这里改为纯 TCP 握手探测: 能连上即视为服务端在线, 不发任何业务包。
-    QTcpSocket socket;
-    socket.connectToHost(m_host, m_port);
-    if (!socket.waitForConnected(1200)) {
-        if (message) {
-            *message = QStringLiteral("无法连接服务端 %1：%2")
-                           .arg(endpointText(), socket.errorString());
-        }
-        return false;
-    }
-    socket.disconnectFromHost();
-    return true;
+    QVariantMap reply;
+    return request(ClientProtocol::Cmd::HEARTBEAT_REQ,
+                   QVariantMap(),
+                   ClientProtocol::Cmd::HEARTBEAT_RESP,
+                   &reply,
+                   message,
+                   1200);
 }
 
 bool ServerApiClient::requestSmsCode(const QString &phone, QString *devCode, QString *message)
@@ -249,10 +243,7 @@ QVector<Station> ServerApiClient::stations(const QString &region, const QString 
     QVariantMap params = withToken();
     params.insert(QStringLiteral("latitude"), 39.9042);
     params.insert(QStringLiteral("longitude"), 116.4074);
-    // radius=0 表示不限距离: 服务端 getNearbyStations 中 radiusM<=0 时不做
-    // 距离过滤, 返回全部站点。避免新建站点(或深圳 seed 站点)因离客户端硬编码
-    // 的北京中心超过默认 100km 而被过滤掉, 导致客户端看不到。
-    params.insert(QStringLiteral("radius"), 0);
+    params.insert(QStringLiteral("radius"), 100000);
     params.insert(QStringLiteral("limit"), 50);
     params.insert(QStringLiteral("offset"), 0);
 
@@ -322,8 +313,6 @@ QVector<Pile> ServerApiClient::pilesByStation(const QString &stationId, QString 
         pile.type = clientPileType(item.value(QStringLiteral("type")).toString());
         pile.power = item.value(QStringLiteral("power")).toDouble();
         pile.status = clientStatus(item.value(QStringLiteral("status")).toString());
-        pile.totalTimes = item.value(QStringLiteral("chargeCount")).toInt();
-        pile.totalHours = item.value(QStringLiteral("totalDuration")).toInt() / 60.0;   // 分钟 -> 小时
         result.push_back(pile);
     }
     return result;

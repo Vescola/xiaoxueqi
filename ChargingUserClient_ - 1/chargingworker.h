@@ -14,7 +14,7 @@ public:
     explicit ChargingWorker(QObject *parent = nullptr);
 
 public slots:
-    void start(const QString &orderId, const QString &pileId, double targetKwh, double unitPrice, double powerKw);
+    void start(const QString &orderId, const QString &pileId, double targetKwh, double unitPrice);
     void stopFault();
 
 signals:
@@ -29,7 +29,6 @@ private:
     QString m_pileId;
     double m_targetKwh = 0.0;
     double m_unitPrice = 0.0;
-    double m_powerKw = 0.0;
     double m_currentKwh = 0.0;
     bool m_finished = false;
 };

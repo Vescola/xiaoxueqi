@@ -907,8 +907,7 @@ void MainWindow::beginCharge()
                               Q_ARG(QString, orderId),
                               Q_ARG(QString, m_selectedPile->id),
                               Q_ARG(double, targetKwh),
-                              Q_ARG(double, unitPrice),
-                              Q_ARG(double, m_selectedPile->power));
+                              Q_ARG(double, unitPrice));
 }
 
 void MainWindow::onChargeProgress(double kwh, double cost, int percent)
