@@ -1,0 +1,1364 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1100</width>
+    <height>760</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>东软电动汽车充电用户端</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="rootLayout">
+    <property name="spacing">
+     <number>12</number>
+    </property>
+    <property name="leftMargin">
+     <number>16</number>
+    </property>
+    <property name="topMargin">
+     <number>14</number>
+    </property>
+    <property name="rightMargin">
+     <number>16</number>
+    </property>
+    <property name="bottomMargin">
+     <number>14</number>
+    </property>
+    <item>
+     <layout class="QHBoxLayout" name="headerLayout">
+      <item>
+       <widget class="QLabel" name="appIconLabel">
+        <property name="minimumSize">
+         <size>
+          <width>46</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>46</width>
+          <height>46</height>
+         </size>
+        </property>
+        <property name="pixmap">
+         <pixmap resource="resources.qrc">:/resources/icons/app.svg</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="titleLayout">
+        <item>
+         <widget class="QLabel" name="titleLabel">
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="text">
+           <string>东软电动汽车充电桩应用管理平台</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="statusLabel">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QStackedWidget" name="mainStack">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="TechPage" name="loginPage">
+       <layout class="QVBoxLayout" name="loginPageLayout">
+        <item>
+         <spacer name="loginTopSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="loginCenterLayout">
+          <item>
+           <spacer name="loginLeftSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QFrame" name="loginCard">
+            <property name="minimumSize">
+             <size>
+              <width>420</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>500</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="frameShape">
+             <enum>QFrame::StyledPanel</enum>
+            </property>
+            <layout class="QVBoxLayout" name="loginCardLayout">
+             <property name="spacing">
+              <number>12</number>
+             </property>
+             <property name="leftMargin">
+              <number>28</number>
+             </property>
+             <property name="topMargin">
+              <number>28</number>
+             </property>
+             <property name="rightMargin">
+              <number>28</number>
+             </property>
+             <property name="bottomMargin">
+              <number>28</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="loginTitleLabel">
+               <property name="text">
+                <string>手机号登录</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="loginPhoneEdit">
+               <property name="placeholderText">
+                <string>11位大陆手机号</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLineEdit" name="loginPasswordEdit">
+               <property name="echoMode">
+                <enum>QLineEdit::Password</enum>
+               </property>
+               <property name="placeholderText">
+                <string>密码</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="rememberCheck">
+               <property name="text">
+                <string>近7天内免登录</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="loginButton">
+               <property name="text">
+                <string>登录</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="loginLinkLayout">
+               <item>
+                <widget class="QPushButton" name="showRegisterButton">
+                 <property name="text">
+                  <string>注册账号</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="forgotButton">
+                 <property name="text">
+                  <string>忘记密码</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <spacer name="loginRightSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="loginBottomSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="TechPage" name="registerPage">
+       <layout class="QHBoxLayout" name="registerPageLayout">
+        <item>
+         <spacer name="registerLeftSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QFrame" name="registerCard">
+          <property name="minimumSize">
+           <size>
+            <width>460</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>540</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <layout class="QVBoxLayout" name="registerCardLayout">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <property name="leftMargin">
+            <number>28</number>
+           </property>
+           <property name="topMargin">
+            <number>28</number>
+           </property>
+           <property name="rightMargin">
+            <number>28</number>
+           </property>
+           <property name="bottomMargin">
+            <number>28</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="registerTitleLabel">
+             <property name="text">
+              <string>注册新用户</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="registerPhoneEdit">
+             <property name="placeholderText">
+              <string>11位大陆手机号</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="registerCodeLayout">
+             <item>
+              <widget class="QLineEdit" name="registerCodeEdit">
+               <property name="placeholderText">
+                <string>4位验证码</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="sendRegisterCodeButton">
+               <property name="text">
+                <string>发送验证码</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="registerPasswordEdit">
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+             <property name="placeholderText">
+              <string>8位密码，含大写字母和特殊字符</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="registerNicknameEdit">
+             <property name="placeholderText">
+              <string>昵称：字母或下划线开头，3到15位</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="registerButton">
+             <property name="text">
+              <string>注册</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="backLoginButton">
+             <property name="text">
+              <string>返回登录</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="registerRightSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="TechPage" name="resetPage">
+       <layout class="QHBoxLayout" name="resetPageLayout">
+        <item>
+         <spacer name="resetLeftSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QFrame" name="resetCard">
+          <property name="minimumSize">
+           <size>
+            <width>460</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>540</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <layout class="QVBoxLayout" name="resetCardLayout">
+           <property name="spacing">
+            <number>12</number>
+           </property>
+           <property name="leftMargin">
+            <number>28</number>
+           </property>
+           <property name="topMargin">
+            <number>28</number>
+           </property>
+           <property name="rightMargin">
+            <number>28</number>
+           </property>
+           <property name="bottomMargin">
+            <number>28</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="resetTitleLabel">
+             <property name="text">
+              <string>找回密码</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="resetPhoneEdit">
+             <property name="placeholderText">
+              <string>已绑定手机号</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="resetCodeLayout">
+             <item>
+              <widget class="QLineEdit" name="resetCodeEdit">
+               <property name="placeholderText">
+                <string>4位验证码</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="sendResetCodeButton">
+               <property name="text">
+                <string>发送验证码</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="resetPasswordEdit">
+             <property name="echoMode">
+              <enum>QLineEdit::Password</enum>
+             </property>
+             <property name="placeholderText">
+              <string>新密码：8位，含大写字母和特殊字符</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="resetPasswordButton">
+             <property name="text">
+              <string>重置密码</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="backLoginButton2">
+             <property name="text">
+              <string>返回登录</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <spacer name="resetRightSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="appPage">
+       <layout class="QVBoxLayout" name="appPageLayout">
+        <property name="spacing">
+         <number>10</number>
+        </property>
+        <item>
+         <layout class="QHBoxLayout" name="userHeaderLayout">
+          <property name="spacing">
+           <number>12</number>
+          </property>
+          <item>
+           <widget class="QFrame" name="headerAvatarCard">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>78</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>110</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <layout class="QHBoxLayout" name="headerAvatarCardLayout">
+             <property name="leftMargin">
+              <number>14</number>
+             </property>
+             <property name="topMargin">
+              <number>5</number>
+             </property>
+             <property name="rightMargin">
+              <number>14</number>
+             </property>
+             <property name="bottomMargin">
+              <number>5</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="headerAvatarLabel">
+               <property name="minimumSize">
+                <size>
+                 <width>68</width>
+                 <height>68</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>68</width>
+                 <height>68</height>
+                </size>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="text">
+                <string>头像</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="currentUserCard">
+            <property name="minimumSize">
+             <size>
+              <width>280</width>
+              <height>78</height>
+             </size>
+            </property>
+            <layout class="QVBoxLayout" name="currentUserCardLayout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>12</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>12</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="currentUserTitleLabel">
+               <property name="text">
+                <string>当前用户</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="helloLabel">
+               <property name="text">
+                <string>未登录</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QFrame" name="walletSummaryCard">
+            <property name="minimumSize">
+             <size>
+              <width>260</width>
+              <height>78</height>
+             </size>
+            </property>
+            <layout class="QVBoxLayout" name="walletSummaryCardLayout">
+             <property name="spacing">
+              <number>4</number>
+             </property>
+             <property name="leftMargin">
+              <number>18</number>
+             </property>
+             <property name="topMargin">
+              <number>12</number>
+             </property>
+             <property name="rightMargin">
+              <number>18</number>
+             </property>
+             <property name="bottomMargin">
+              <number>12</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="walletSummaryTitleLabel">
+               <property name="text">
+                <string>钱包余额</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="headerBalanceLabel">
+               <property name="text">
+                <string>0.00 元</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+          <item>
+           <spacer name="userHeaderSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="logoutButton">
+            <property name="text">
+             <string>注销</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTabWidget" name="appTabs">
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="stationsTab">
+           <attribute name="title">
+            <string>附近电站</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="stationsTabLayout">
+            <item>
+             <widget class="QFrame" name="stationSearchPanel">
+              <layout class="QHBoxLayout" name="stationSearchLayout">
+               <item>
+                <widget class="QComboBox" name="regionCombo">
+                 <item>
+                  <property name="text">
+                   <string>全部区域</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>南湖区</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>秀洲区</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>经开区</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="addressEdit">
+                 <property name="placeholderText">
+                  <string>输入当前位置或目标地址</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="searchButton">
+                 <property name="text">
+                  <string>定位并查询</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="stationBodyLayout">
+              <item>
+               <widget class="QListWidget" name="stationList">
+                <property name="minimumWidth">
+                 <number>320</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="detailPanel">
+                <layout class="QVBoxLayout" name="detailPanelLayout">
+                 <property name="spacing">
+                  <number>10</number>
+                 </property>
+                 <property name="leftMargin">
+                  <number>16</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>16</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>16</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>16</number>
+                 </property>
+                 <item>
+                  <widget class="QLabel" name="stationDetailNameLabel">
+                   <property name="text">
+                    <string>请选择充电站</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="stationDetailInfoLabel">
+                   <property name="wordWrap">
+                    <bool>true</bool>
+                   </property>
+                   <property name="text">
+                    <string>电站详情会显示在这里。</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="recommendLabel">
+                   <property name="text">
+                    <string>智能推荐：等待选择电站</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="navigationControlLayout">
+                   <item>
+                    <widget class="QComboBox" name="routeModeCombo">
+                     <item>
+                      <property name="text">
+                       <string>驾车</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>步行</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>骑行</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>公共交通</string>
+                      </property>
+                     </item>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="navigateButton">
+                     <property name="text">
+                      <string>路线导航</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="startChargeButton">
+                     <property name="text">
+                      <string>选择空闲桩充电</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <widget class="QTableWidget" name="pileTable">
+                   <property name="alternatingRowColors">
+                    <bool>true</bool>
+                   </property>
+                   <property name="selectionBehavior">
+                    <enum>QAbstractItemView::SelectRows</enum>
+                   </property>
+                   <property name="selectionMode">
+                    <enum>QAbstractItemView::SingleSelection</enum>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QTextBrowser" name="mapPreviewBrowser">
+                   <property name="minimumHeight">
+                    <number>110</number>
+                   </property>
+                   <property name="html">
+                    <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;body&gt;&lt;p&gt;路线规划信息会显示在这里。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="chargeTab">
+           <attribute name="title">
+            <string>充电结算</string>
+           </attribute>
+           <layout class="QHBoxLayout" name="chargeTabLayout">
+            <item>
+             <widget class="QFrame" name="chargePanel">
+              <layout class="QVBoxLayout" name="chargePanelLayout">
+               <property name="spacing">
+                <number>14</number>
+               </property>
+               <property name="leftMargin">
+                <number>24</number>
+               </property>
+               <property name="topMargin">
+                <number>24</number>
+               </property>
+               <property name="rightMargin">
+                <number>24</number>
+               </property>
+               <property name="bottomMargin">
+                <number>24</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="chargeInfoLabel">
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                 <property name="text">
+                  <string>请先在附近电站中选择一个空闲电桩。</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="chargeTargetLayout">
+                 <item>
+                  <widget class="QLabel" name="targetKwhLabel">
+                   <property name="text">
+                    <string>目标电量（度）</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QDoubleSpinBox" name="targetKwhSpin">
+                   <property name="decimals">
+                    <number>1</number>
+                   </property>
+                   <property name="minimum">
+                    <double>1.000000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>80.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>1.000000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>20.000000000000000</double>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <widget class="QProgressBar" name="chargeProgressBar">
+                 <property name="value">
+                  <number>0</number>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="chargeMetricLayout">
+                 <item>
+                  <widget class="QLabel" name="chargeKwhLabel">
+                   <property name="text">
+                    <string>已充电量：0.00 度</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLabel" name="chargeCostLabel">
+                   <property name="text">
+                    <string>预估费用：0.00 元</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="chargeButtonLayout">
+                 <item>
+                  <widget class="QPushButton" name="beginChargeButton">
+                   <property name="text">
+                    <string>开始充电</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="faultButton">
+                   <property name="text">
+                    <string>模拟故障</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="settleButton">
+                   <property name="text">
+                    <string>确认结算</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="backStationsButton">
+                   <property name="text">
+                    <string>返回电站</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <spacer name="chargeBottomSpacer">
+                 <property name="orientation">
+                  <enum>Qt::Vertical</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>20</width>
+                   <height>40</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="walletTab">
+           <attribute name="title">
+            <string>钱包流水</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="walletTabLayout">
+            <item>
+             <widget class="QFrame" name="walletPanel">
+              <layout class="QVBoxLayout" name="walletPanelLayout">
+               <property name="spacing">
+                <number>12</number>
+               </property>
+               <property name="leftMargin">
+                <number>20</number>
+               </property>
+               <property name="topMargin">
+                <number>18</number>
+               </property>
+               <property name="rightMargin">
+                <number>20</number>
+               </property>
+               <property name="bottomMargin">
+                <number>18</number>
+               </property>
+               <item>
+                <widget class="QLabel" name="balanceLabel">
+                 <property name="text">
+                  <string>0.00 元</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="rechargeLayout">
+                 <item>
+                  <widget class="QLabel" name="rechargeAmountLabel">
+                   <property name="text">
+                    <string>充值金额：</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QDoubleSpinBox" name="rechargeAmountSpin">
+                   <property name="minimumSize">
+                    <size>
+                     <width>220</width>
+                     <height>0</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                   <property name="buttonSymbols">
+                    <enum>QAbstractSpinBox::NoButtons</enum>
+                   </property>
+                   <property name="decimals">
+                    <number>2</number>
+                   </property>
+                   <property name="suffix">
+                    <string> 元</string>
+                   </property>
+                   <property name="minimum">
+                    <double>0.010000000000000</double>
+                   </property>
+                   <property name="maximum">
+                    <double>9999.000000000000000</double>
+                   </property>
+                   <property name="singleStep">
+                    <double>10.000000000000000</double>
+                   </property>
+                   <property name="value">
+                    <double>100.000000000000000</double>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="rechargeButton">
+                   <property name="text">
+                    <string>充值</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <spacer name="rechargeSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="transactionFilterLayout">
+                 <item>
+                  <widget class="QDateEdit" name="fromDateEdit">
+                   <property name="calendarPopup">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QDateEdit" name="toDateEdit">
+                   <property name="calendarPopup">
+                    <bool>true</bool>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QPushButton" name="queryTransButton">
+                   <property name="text">
+                    <string>查询流水</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTableWidget" name="transactionsTable">
+              <property name="alternatingRowColors">
+               <bool>true</bool>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="profileTab">
+           <attribute name="title">
+            <string>个人资料</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="profileTabLayout">
+            <item>
+             <widget class="QFrame" name="profilePanel">
+              <layout class="QVBoxLayout" name="profilePanelLayout">
+               <property name="spacing">
+                <number>12</number>
+               </property>
+               <property name="leftMargin">
+                <number>24</number>
+               </property>
+               <property name="topMargin">
+                <number>24</number>
+               </property>
+               <property name="rightMargin">
+                <number>24</number>
+               </property>
+               <property name="bottomMargin">
+                <number>24</number>
+               </property>
+               <item>
+                <layout class="QHBoxLayout" name="avatarLayout">
+                 <item>
+                  <widget class="QLabel" name="avatarLabel">
+                   <property name="minimumSize">
+                    <size>
+                     <width>72</width>
+                     <height>72</height>
+                    </size>
+                   </property>
+                   <property name="maximumSize">
+                    <size>
+                     <width>72</width>
+                     <height>72</height>
+                    </size>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
+                   </property>
+                   <property name="text">
+                    <string>头像</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="profileInfoLayout">
+                   <item>
+                    <widget class="QLabel" name="profilePhoneLabel">
+                     <property name="text">
+                      <string>手机号：</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLabel" name="profileStatusLabel">
+                     <property name="text">
+                      <string>账号状态：正常</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <spacer name="avatarSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="profileEditLayout">
+                 <item>
+                  <layout class="QHBoxLayout" name="profileEntryLayout">
+                   <item>
+                    <widget class="QPushButton" name="modifyProfileButton">
+                     <property name="text">
+                      <string>修改资料</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="profileEntrySpacer">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="profileEditorLayout">
+                   <item>
+                    <widget class="QLineEdit" name="nicknameEdit">
+                     <property name="placeholderText">
+                      <string>昵称</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="chooseAvatarButton">
+                     <property name="text">
+                      <string>选择头像</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="saveProfileButton">
+                     <property name="text">
+                      <string>保存资料</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="cancelProfileButton">
+                     <property name="text">
+                      <string>取消</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+              <item>
+                <layout class="QVBoxLayout" name="passwordLayout">
+                 <item>
+                  <layout class="QHBoxLayout" name="passwordEntryLayout">
+                   <item>
+                    <widget class="QPushButton" name="changePasswordButton">
+                     <property name="text">
+                      <string>修改密码</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="passwordEntrySpacer">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
+                  <layout class="QHBoxLayout" name="passwordEditorLayout">
+                   <item>
+                    <widget class="QLineEdit" name="oldPasswordEdit">
+                     <property name="echoMode">
+                      <enum>QLineEdit::Password</enum>
+                     </property>
+                     <property name="placeholderText">
+                      <string>原密码</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="newPasswordEdit">
+                     <property name="echoMode">
+                      <enum>QLineEdit::Password</enum>
+                     </property>
+                     <property name="placeholderText">
+                      <string>新密码</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QLineEdit" name="confirmPasswordEdit">
+                     <property name="echoMode">
+                      <enum>QLineEdit::Password</enum>
+                     </property>
+                     <property name="placeholderText">
+                      <string>再输入新密码</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="confirmPasswordButton">
+                     <property name="text">
+                      <string>确认修改</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="cancelPasswordButton">
+                     <property name="text">
+                      <string>取消</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
+             <spacer name="profileBottomSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>TechPage</class>
+   <extends>QWidget</extends>
+   <header>techpage.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections/>
+</ui>
