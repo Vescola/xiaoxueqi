@@ -942,7 +942,7 @@ bool DatabaseManager::finishOrder(const QString &orderNo, double energyKwh)
 
     const QDateTime now = QDateTime::currentDateTime();
     qint64 secs = startTime.secsTo(now);
-    int durationMinutes = static_cast<int>(secs / 60);
+    int durationMinutes = static_cast<int>(secs * 3600 / 60);
     if (durationMinutes < 0) {
         durationMinutes = 0;
     }

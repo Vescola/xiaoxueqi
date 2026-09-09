@@ -395,8 +395,8 @@ void ServerCore::handleChangePwd(ClientSession *s, const QVariantMap &p, quint32
     const QString newPwd = p.value("newPassword").toString();
 
     // 数据库端 changePassword 内部完成"原密码比对 + 写入新密码"。
-    // 当前 PasswordMode=plain: 库里存的就是客户端 SHA-256 哈希, 直接比对即可;
-    // 加盐哈希由 PasswordUtil 负责, 切换模式时此处逻辑保持不变。
+    // 库里存的就是客户端 SHA-256 哈希(客户端发送前已哈希, 网络与库中均无明文),
+    // 因此直接用客户端传来的哈希串比对即可。
     if (!DatabaseManager::instance().changePassword(userId, oldPwd, newPwd)) {
         replyError(s, rid, Err::OLD_PWD_ERR, "原密码错误或修改失败");
         return;
@@ -570,6 +570,8 @@ void ServerCore::handleStationDetail(ClientSession *s, const QVariantMap &p, qui
         item.insert("type", c.type == "fast" ? "快充" : "慢充");
         item.insert("power", c.powerKw);
         item.insert("status", c.status);
+        item.insert("chargeCount", c.chargeCount);
+        item.insert("totalDuration", c.totalDuration);   // 单位: 分钟
         piles.append(item);
     }
 
@@ -719,7 +721,7 @@ void ServerCore::handleStopCharge(ClientSession *s, const QVariantMap &p, quint3
     bool cf = false;
     const Charger charger = db.getChargerByCode(order.chargerCode, cf);
     const double powerKw = cf ? charger.powerKw : 7.0;
-    const double energyKwh = powerKw * (secs / 3600.0) * 150;//150 -> ChargingSpeedUp
+    const double energyKwh = powerKw * (secs / 3600.0) * 60;//150 -> ChargingSpeedUp
 
     if (!db.finishOrder(orderNo, energyKwh)) {
         replyError(s, rid, Err::DB_ERROR, "结束充电失败");

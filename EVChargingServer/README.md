@@ -44,7 +44,7 @@ Qt Creator：打开 `EVChargingServer.pro` → 选 5.15.3 Kit → 构建 → 运
 | `[Network]` | `ListenPort` | 监听端口，默认 8888 |
 | `[Database]` | `DbPath` | SQLite 库路径，默认 `charging.db` |
 | `[Billing]` | `PriceFast` / `PriceSlow` | 快充 / 慢充单价（元/kWh），两档价决策 |
-| `[Security]` | `PasswordMode` | `plain`(当前) / `saltedhash`(预留加盐) |
+| `[Security]` | `TokenValidDays` | 会话 token 有效期（天），默认 7 |
 
 ## 4. 运行流程（与《思路.docx》一致）
 
@@ -149,10 +149,15 @@ EVChargingServer/
 
 ## 9. 密码安全（当前阶段）
 
-当前按决策**沿用明文哈希比对**（客户端先 SHA-256，服务端直接比对该哈希），
-未做加盐。切换方式：`config.ini -> [Security] PasswordMode=saltedhash`，
-`PasswordUtil` 会自动改为 `SHA256(客户端哈希 + 随机盐)` 并存 `salt$hash` 复合串，
-**无需改任何业务代码**。切换后旧明文账号需重置口令。
+采用**客户端哈希 + 服务端原样存储**：
+
+1. 客户端发送前先对原始口令做一次 SHA-256（`ServerApiClient::hashedPassword()`），
+   因此**网络传输中不出现明文口令**；
+2. 服务端 `PasswordUtil::hashForStorage()` 原样入库，`verify()` 直接比对哈希串，
+   即**数据库里保存的也不是明文，而是 64 位哈希串**；
+3. 服务端不再做二次加工（原先预留的加盐分支已移除，`PasswordMode` 配置项一并删除）。
+
+⚠️ 若数据库中仍存在旧版本写入的 `salt$hash` 格式口令，这些账号需重置口令后才能登录。
 
 ## 10. 后续开放点
 

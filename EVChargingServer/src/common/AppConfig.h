@@ -37,13 +37,6 @@ public:
     double  priceOf(const QString &chargerType) const;
 
     // ---- 安全 ----
-    // 密码处理模式。当前按决策沿用明文,后续可切换为加盐哈希而不改调用方。
-    enum class PasswordMode {
-        Plain,      // 明文存储/比对(当前默认)
-        SaltedHash  // SHA256(客户端SHA256哈希 + 随机盐) —— 预留,暂不启用
-    };
-    PasswordMode passwordMode() const { return m_passwordMode; }
-
     // 会话 token 有效期(天)。建议 7 天
     int     tokenValidDays() const  { return m_tokenValidDays; }
 
@@ -71,8 +64,6 @@ private:
 
     double  m_priceFast         = 1.80;
     double  m_priceSlow         = 0.90;
-
-    PasswordMode m_passwordMode = PasswordMode::Plain;
 
     int     m_tokenValidDays    = 7;
 

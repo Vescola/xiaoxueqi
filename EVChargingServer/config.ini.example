@@ -19,8 +19,6 @@ PriceFast=1.80
 PriceSlow=0.90
 
 [Security]
-; plain = 明文哈希比对(当前默认); saltedhash = SHA256(客户端哈希+随机盐)
-PasswordMode=plain
 TokenValidDays=7
 
 [Sms]

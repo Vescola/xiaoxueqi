@@ -249,7 +249,10 @@ QVector<Station> ServerApiClient::stations(const QString &region, const QString 
     QVariantMap params = withToken();
     params.insert(QStringLiteral("latitude"), 39.9042);
     params.insert(QStringLiteral("longitude"), 116.4074);
-    params.insert(QStringLiteral("radius"), 100000);
+    // radius=0 表示不限距离: 服务端 getNearbyStations 中 radiusM<=0 时不做
+    // 距离过滤, 返回全部站点。避免新建站点(或深圳 seed 站点)因离客户端硬编码
+    // 的北京中心超过默认 100km 而被过滤掉, 导致客户端看不到。
+    params.insert(QStringLiteral("radius"), 0);
     params.insert(QStringLiteral("limit"), 50);
     params.insert(QStringLiteral("offset"), 0);
 
@@ -319,6 +322,8 @@ QVector<Pile> ServerApiClient::pilesByStation(const QString &stationId, QString 
         pile.type = clientPileType(item.value(QStringLiteral("type")).toString());
         pile.power = item.value(QStringLiteral("power")).toDouble();
         pile.status = clientStatus(item.value(QStringLiteral("status")).toString());
+        pile.totalTimes = item.value(QStringLiteral("chargeCount")).toInt();
+        pile.totalHours = item.value(QStringLiteral("totalDuration")).toInt() / 60.0;   // 分钟 -> 小时
         result.push_back(pile);
     }
     return result;

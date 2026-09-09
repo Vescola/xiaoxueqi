@@ -42,7 +42,6 @@ void AppConfig::load(const QString &cfgPath)
         set.endGroup();
 
         set.beginGroup("Security");
-        set.setValue("PasswordMode", "plain");
         set.setValue("TokenValidDays", m_tokenValidDays);
         set.endGroup();
 
@@ -72,15 +71,6 @@ void AppConfig::load(const QString &cfgPath)
     set.endGroup();
 
     set.beginGroup("Security");
-    const QString mode = set.value("PasswordMode", "plain")
-                            .toString().trimmed().toLower();
-    // 目前只识别 saltedhash / sha256salt 为加盐模式, 其余一律按明文处理。
-    // 后续切换到加盐哈希时, 只需把 ini 里的值改成 saltedhash, 无需改代码。
-    if (mode == "saltedhash" || mode == "sha256salt" || mode == "salt") {
-        m_passwordMode = PasswordMode::SaltedHash;
-    } else {
-        m_passwordMode = PasswordMode::Plain;
-    }
     m_tokenValidDays = set.value("TokenValidDays", m_tokenValidDays).toInt();
     set.endGroup();
 

@@ -5,7 +5,7 @@
 
 // 演示加速倍率: 充电动画按真实功率 × 该倍率快进, 使演示时长可控。
 // 例如 120kW 桩: 120 × 150 / 3600 = 5 度/秒, 充 60 度约 12 秒; 7kW 慢充则明显变慢。
-constexpr double kSimSpeedUp = 150.0;
+constexpr double kSimSpeedUp = 60.0;
 
 ChargingWorker::ChargingWorker(QObject *parent)
     : QObject(parent)
