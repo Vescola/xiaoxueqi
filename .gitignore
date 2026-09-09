@@ -53,3 +53,6 @@ config.ini
 Thumbs.db
 .vscode/
 .idea/
+
+# WorkBuddy workspace data (not part of the project)
+.workbuddy/
