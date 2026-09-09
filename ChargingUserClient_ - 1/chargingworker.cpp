@@ -3,17 +3,22 @@
 #include <QTimer>
 #include <QtGlobal>
 
+// 演示加速倍率: 充电动画按真实功率 × 该倍率快进, 使演示时长可控。
+// 例如 120kW 桩: 120 × 150 / 3600 = 5 度/秒, 充 60 度约 12 秒; 7kW 慢充则明显变慢。
+constexpr double kSimSpeedUp = 150.0;
+
 ChargingWorker::ChargingWorker(QObject *parent)
     : QObject(parent)
 {
 }
 
-void ChargingWorker::start(const QString &orderId, const QString &pileId, double targetKwh, double unitPrice)
+void ChargingWorker::start(const QString &orderId, const QString &pileId, double targetKwh, double unitPrice, double powerKw)
 {
     m_orderId = orderId;
     m_pileId = pileId;
     m_targetKwh = qMax(0.1, targetKwh);
     m_unitPrice = unitPrice;
+    m_powerKw = qMax(0.1, powerKw);
     m_currentKwh = 0.0;
     m_finished = false;
 
@@ -28,7 +33,8 @@ void ChargingWorker::start(const QString &orderId, const QString &pileId, double
             return;
         }
 
-        const double step = qMax(0.08, m_targetKwh / 40.0);
+        // 每 200ms 一步, 每步电量 = 功率 × 倍率 / 3600 × 0.2
+        const double step = m_powerKw * kSimSpeedUp / 3600.0 * 0.2;
         m_currentKwh = qMin(m_targetKwh, m_currentKwh + step);
         const double cost = m_currentKwh * m_unitPrice;
         const int percent = qRound((m_currentKwh / m_targetKwh) * 100.0);
@@ -40,7 +46,7 @@ void ChargingWorker::start(const QString &orderId, const QString &pileId, double
     });
 
     emit progressChanged(0.0, 0.0, 0);
-    m_timer->start(350);
+    m_timer->start(200);
 }
 
 void ChargingWorker::stopFault()

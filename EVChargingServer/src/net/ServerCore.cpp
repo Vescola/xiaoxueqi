@@ -653,7 +653,7 @@ void ServerCore::handleStartCharge(ClientSession *s, const QVariantMap &p, quint
         return;
     }
 
-    // 3. 余额检查(协议 3001)
+    // 3. 余额检查
     User user;
     db.getUserInfo(userId, user);
     if (user.balance <= 0) {
@@ -719,7 +719,7 @@ void ServerCore::handleStopCharge(ClientSession *s, const QVariantMap &p, quint3
     bool cf = false;
     const Charger charger = db.getChargerByCode(order.chargerCode, cf);
     const double powerKw = cf ? charger.powerKw : 7.0;
-    const double energyKwh = powerKw * (secs / 3600.0) * 0.85;
+    const double energyKwh = powerKw * (secs / 3600.0) * 150;//150 -> ChargingSpeedUp
 
     if (!db.finishOrder(orderNo, energyKwh)) {
         replyError(s, rid, Err::DB_ERROR, "结束充电失败");
@@ -747,8 +747,8 @@ void ServerCore::handleStopCharge(ClientSession *s, const QVariantMap &p, quint3
     r.insert("newBalance", newBalance);
     reply(s, Cmd::STOP_CHARGE_RESP, r, rid);
 
-    emit logMessage(QStringLiteral("结束充电: 订单%1, 电量%2kWh, 金额%3元")
-                        .arg(orderNo).arg(energyKwh).arg(amount));
+    emit logMessage(QStringLiteral("结束充电: 订单%1, 电量%2kWh, 金额%3元, secs = %4, powerKw = %5")
+                        .arg(orderNo).arg(energyKwh).arg(amount).arg(secs).arg(powerKw));
 }
 
 void ServerCore::handleChargeStatus(ClientSession *s, const QVariantMap &p, quint32 rid)

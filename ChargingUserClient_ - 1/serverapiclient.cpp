@@ -38,13 +38,19 @@ int ServerApiClient::userId() const
 
 bool ServerApiClient::ping(QString *message)
 {
-    QVariantMap reply;
-    return request(ClientProtocol::Cmd::HEARTBEAT_REQ,
-                   QVariantMap(),
-                   ClientProtocol::Cmd::HEARTBEAT_RESP,
-                   &reply,
-                   message,
-                   1200);
+    // 服务端未实现心跳命令(0x6xxx), 发送会走 default 分支回 0x9FFF 未知命令码。
+    // 这里改为纯 TCP 握手探测: 能连上即视为服务端在线, 不发任何业务包。
+    QTcpSocket socket;
+    socket.connectToHost(m_host, m_port);
+    if (!socket.waitForConnected(1200)) {
+        if (message) {
+            *message = QStringLiteral("无法连接服务端 %1：%2")
+                           .arg(endpointText(), socket.errorString());
+        }
+        return false;
+    }
+    socket.disconnectFromHost();
+    return true;
 }
 
 bool ServerApiClient::requestSmsCode(const QString &phone, QString *devCode, QString *message)

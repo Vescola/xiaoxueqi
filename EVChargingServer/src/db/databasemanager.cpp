@@ -888,10 +888,14 @@ bool DatabaseManager::createOrder(const QString &orderNo, int userId,
     QSqlQuery o(db);
     o.prepare("INSERT INTO orders (order_no, user_id, charger_code, status,"
               " start_time, unit_price)"
-              " VALUES (?, ?, ?, 'charging', CURRENT_TIMESTAMP, ?)");
+              " VALUES (?, ?, ?, 'charging', ?, ?)");
     o.addBindValue(orderNo);
     o.addBindValue(userId);
     o.addBindValue(chargerCode);
+    // start_time 改用 Qt 本地时间字符串。原 SQL CURRENT_TIMESTAMP 返回 UTC,
+    // 与结算处 QDateTime::fromString 按本地时间解析不一致, 导致充电时长被放大
+    // 8 小时(时区差), 一度算出 408 度。此处统一为本地时间。
+    o.addBindValue(QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss"));
     o.addBindValue(unitPrice);
     if (!o.exec()) {
         db.rollback();

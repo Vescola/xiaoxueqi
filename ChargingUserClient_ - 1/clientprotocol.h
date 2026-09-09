@@ -40,8 +40,6 @@ namespace Cmd {
     const quint16 START_CHARGE_RESP  = 0x3004;
     const quint16 STOP_CHARGE_REQ    = 0x3005;
     const quint16 STOP_CHARGE_RESP   = 0x3006;
-    const quint16 HEARTBEAT_REQ      = 0x6001;
-    const quint16 HEARTBEAT_RESP     = 0x6002;
     const quint16 ERROR_RESP         = 0x9FFF;
 }
 
