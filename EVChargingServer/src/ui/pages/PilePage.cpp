@@ -61,7 +61,7 @@ void PilePage::refresh()
         .arg(idle).arg(pct(idle), 0, 'f', 1));
     ui->faultLabel->setText(QStringLiteral("%1（%2%）")
         .arg(fault + offline).arg(pct(fault + offline), 0, 'f', 1));
-
+    ui->totalLabel->setText(QStringLiteral("%1").arg(total));
     // 2. 列表
     onFilterChanged();
 }

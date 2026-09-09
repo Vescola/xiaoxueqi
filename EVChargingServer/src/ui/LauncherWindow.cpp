@@ -77,7 +77,7 @@ void LauncherWindow::onConnectionCountChanged(int count)
 }
 
 void LauncherWindow::closeEvent(QCloseEvent *e){
-    ConfirmClosingDialog dlg("您要关闭管理程序吗？", this);
+    ConfirmClosingDialog dlg("您要关闭服务器吗？",  this);
     if(dlg.exec() == QDialog::Accepted){
         e->accept();
     }
